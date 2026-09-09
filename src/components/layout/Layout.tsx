@@ -5,6 +5,7 @@ import { AmbientLayer } from './AmbientLayer'
 import { SidebarNav } from './SidebarNav'
 import { PageTransition } from './PageTransition'
 import { MobileDock } from './MobileDock'
+import { ErrorBoundary } from '../ui/ErrorBoundary'
 
 const pageTitles: Record<string, string> = {
   '/': 'Tableau de bord',
@@ -28,7 +29,10 @@ export function Layout() {
       : location.pathname.startsWith('/recherches/') ? 'Recherche'
       : location.pathname.startsWith('/biens/') ? 'Bien' : 'Néméa')
 
-  useEffect(() => { setNavOpen(false) }, [location.pathname])
+  useEffect(() => {
+    setNavOpen(false)
+    document.querySelector('.app-scroll-area')?.scrollTo(0, 0)
+  }, [location.pathname])
 
   useEffect(() => {
     document.body.style.overflow = navOpen ? 'hidden' : ''
@@ -70,7 +74,9 @@ export function Layout() {
 
               <PageTransition>
                 <div className="content-wrap">
-                  <Outlet />
+                  <ErrorBoundary label="Impossible d'afficher les correspondances.">
+                    <Outlet />
+                  </ErrorBoundary>
                 </div>
               </PageTransition>
             </main>
@@ -78,7 +84,7 @@ export function Layout() {
         </div>
       </div>
 
-      <MobileDock />
+      <MobileDock onOpenMenu={() => setNavOpen(true)} />
     </div>
   )
 }

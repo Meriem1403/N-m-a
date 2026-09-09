@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
-import { Building2, ChevronRight, User } from 'lucide-react'
-import type { MatchResult, Property } from '../../types'
+import { Building2, Check, ChevronRight, Minus, Sparkles, User, X } from 'lucide-react'
+import type { MatchDetail, MatchResult, Property } from '../../types'
 import { ScoreRing } from '../ui/ScoreRing'
 
 interface MatchCardProps {
@@ -8,6 +8,15 @@ interface MatchCardProps {
   property?: Property
   rank?: number
   delay?: number
+  /** Désactivé par défaut sur les listes longues (perf mobile) */
+  animateScore?: boolean
+}
+
+const STATUS_ORDER: Record<MatchDetail['status'], number> = {
+  miss: 0,
+  partial: 1,
+  bonus: 2,
+  match: 3,
 }
 
 function RankBadge({ rank }: { rank: number }) {
@@ -18,32 +27,56 @@ function RankBadge({ rank }: { rank: number }) {
   )
 }
 
+function CriterionChip({ detail }: { detail: MatchDetail }) {
+  const label = detail.criterion ?? 'Critère'
+  const Icon =
+    detail.status === 'match' ? Check
+    : detail.status === 'bonus' ? Sparkles
+    : detail.status === 'partial' ? Minus
+    : X
+
+  return (
+    <span
+      className={`match-criterion match-criterion--${detail.status}`}
+      title={detail.message}
+    >
+      <Icon size={11} strokeWidth={2.25} aria-hidden />
+      <span className="match-criterion__label">{label}</span>
+    </span>
+  )
+}
+
 function MatchCriteriaSummary({ details }: { details: MatchResult['details'] }) {
   if (details.length === 0) return null
 
+  const sorted = [...details].sort(
+    (a, b) => STATUS_ORDER[a.status] - STATUS_ORDER[b.status],
+  )
   const ok = details.filter((d) => d.status === 'match' || d.status === 'bonus').length
-  const issues = details.filter((d) => d.status === 'miss' || d.status === 'partial')
+  const gaps = details.length - ok
 
   return (
-    <div className="match-card__summary">
-      <div className="match-card__meter" aria-hidden>
-        {details.map((d, i) => (
-          <span key={i} className={`match-card__meter-seg match-card__meter-seg--${d.status}`} />
-        ))}
-      </div>
-      <p className="match-card__summary-text">
-        <span className="match-card__summary-ok">{ok} sur {details.length} critères</span>
-        {issues.length > 0 && (
-          <span className="match-card__summary-issues">
-            {' · '}{issues.map((d) => d.criterion.toLowerCase()).join(', ')}
+    <div className="match-card__criteria">
+      <div className="match-card__criteria-head">
+        <span className="match-card__criteria-stat match-card__criteria-stat--ok">
+          {ok} OK
+        </span>
+        {gaps > 0 && (
+          <span className="match-card__criteria-stat match-card__criteria-stat--gap">
+            {gaps} écart{gaps > 1 ? 's' : ''}
           </span>
         )}
-      </p>
+      </div>
+      <div className="match-card__criteria-chips" aria-label="Critères de correspondance">
+        {sorted.map((d) => (
+          <CriterionChip key={`${d.criterion}-${d.status}-${d.message}`} detail={d} />
+        ))}
+      </div>
     </div>
   )
 }
 
-export function MatchCard({ match, property, rank, delay = 0 }: MatchCardProps) {
+export function MatchCard({ match, property, rank, delay = 0, animateScore = false }: MatchCardProps) {
   const { profile, score, details } = match
   const isTop = score >= 85
 
@@ -56,7 +89,7 @@ export function MatchCard({ match, property, rank, delay = 0 }: MatchCardProps) 
     >
       <div className="flex items-start gap-3 sm:gap-4">
         {rank !== undefined && <RankBadge rank={rank} />}
-        <ScoreRing score={score} size={50} strokeWidth={3} />
+        <ScoreRing score={score} size={50} strokeWidth={3} animate={animateScore} />
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2">
             <p className="text-base font-semibold text-white truncate flex items-center gap-1.5">

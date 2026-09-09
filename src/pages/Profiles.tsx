@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react'
 import { ProfileCard } from '../components/cards/ProfileCard'
 import { PageHeader } from '../components/ui/PageHeader'
-import { Reveal } from '../components/ui/Reveal'
 import { SmartSearch } from '../components/ui/SmartSearch'
 import { useApp } from '../store/AppContext'
 
@@ -23,31 +22,25 @@ export function Profiles() {
 
   return (
     <div className="content-page space-y-5 sm:space-y-6">
-      <Reveal>
-        <PageHeader
-          eyebrow="Profils"
-          title={`${profiles.length} prospect${profiles.length > 1 ? 's' : ''}`}
-          gradient
-        />
-      </Reveal>
+      <PageHeader
+        eyebrow="Profils"
+        title={`${profiles.length} prospect${profiles.length > 1 ? 's' : ''}`}
+      />
 
-      <Reveal delay={60}>
       <SmartSearch
         value={query}
         onChange={setQuery}
         placeholder="Nom, email, téléphone…"
         resultCount={query ? filtered.length : undefined}
       />
-      </Reveal>
 
       <div className="responsive-stack">
-        {filtered.map((profile, i) => (
-          <Reveal key={profile.id} delay={i * 50}>
-            <ProfileCard
-              profile={profile}
-              searchCount={searches.filter((s) => s.profileId === profile.id).length}
-            />
-          </Reveal>
+        {filtered.map((profile) => (
+          <ProfileCard
+            key={profile.id}
+            profile={profile}
+            searchCount={searches.filter((s) => s.profileId === profile.id).length}
+          />
         ))}
         {filtered.length === 0 && (
           <p className="text-center py-12 text-sm text-white/40">Aucun profil trouvé</p>

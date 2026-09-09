@@ -8,11 +8,12 @@ interface PageHeaderProps {
   subtitle?: string
   icon?: ReactNode
   action?: ReactNode
+  animated?: boolean
   /** @deprecated Le style pro est appliqué par défaut */
   gradient?: boolean
 }
 
-export function PageHeader({ eyebrow, title, subtitle, icon, action }: PageHeaderProps) {
+export function PageHeader({ eyebrow, title, subtitle, icon, action, animated = false }: PageHeaderProps) {
   return (
     <header
       className={cn(
@@ -26,6 +27,7 @@ export function PageHeader({ eyebrow, title, subtitle, icon, action }: PageHeade
         title={title}
         subtitle={subtitle}
         icon={icon}
+        animated={animated}
       />
       {action && <div className="page-header__action">{action}</div>}
     </header>

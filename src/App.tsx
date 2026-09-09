@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Navigate, Routes, Route } from 'react-router-dom'
 import { Layout } from './components/layout/Layout'
 import { AppProvider } from './store/AppContext'
 import { Dashboard } from './pages/Dashboard'
@@ -39,6 +39,7 @@ export default function App() {
             <Route path="biens/:id/modifier" element={<PropertyEdit />} />
             <Route path="biens/:id" element={<PropertyDetail />} />
             <Route path="correspondances" element={<Matches />} />
+            <Route path="matchs" element={<Navigate to="/correspondances" replace />} />
             <Route path="historique" element={<History />} />
             <Route path="import" element={<Import />} />
             <Route path="*" element={<NotFound />} />

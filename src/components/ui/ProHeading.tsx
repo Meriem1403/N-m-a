@@ -20,7 +20,7 @@ export function ProHeading({
   subtitle,
   icon,
   className,
-  animated = true,
+  animated = false,
 }: ProHeadingProps) {
   if (variant === 'section') {
     return (

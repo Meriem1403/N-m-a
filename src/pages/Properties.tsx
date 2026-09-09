@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom'
 import { Plus } from 'lucide-react'
 import { PropertyCard } from '../components/cards/PropertyCard'
 import { PageHeader } from '../components/ui/PageHeader'
-import { Reveal } from '../components/ui/Reveal'
 import { SmartSearch } from '../components/ui/SmartSearch'
 import { statusLabels } from '../lib/utils'
 import type { PropertyStatus } from '../types'
@@ -32,20 +31,17 @@ export function Properties() {
   const disponibleCount = properties.filter((p) => p.status === 'disponible').length
 
   return (
-    <div className="space-y-4 sm:space-y-5 w-full min-w-0">
-      <Reveal>
-        <PageHeader
-          eyebrow="Biens"
-          title={`${disponibleCount} disponible${disponibleCount > 1 ? 's' : ''} sur ${properties.length}`}
-          subtitle="Filtrez par statut ou recherchez par référence, quartier ou type."
-          gradient
-          action={
-            <Link to="/biens/nouveau" className="btn-primary text-sm w-full sm:w-auto justify-center">
-              <Plus size={16} aria-hidden /> Nouveau bien
-            </Link>
-          }
-        />
-      </Reveal>
+    <div className="space-y-4 sm:space-y-5 w-full min-w-0 content-page">
+      <PageHeader
+        eyebrow="Biens"
+        title={`${disponibleCount} disponible${disponibleCount > 1 ? 's' : ''} sur ${properties.length}`}
+        subtitle="Filtrez par statut ou recherchez par référence, quartier ou type."
+        action={
+          <Link to="/biens/nouveau" className="btn-primary text-sm w-full sm:w-auto justify-center">
+            <Plus size={16} aria-hidden /> Nouveau bien
+          </Link>
+        }
+      />
 
       <div className="flex flex-col gap-3 w-full">
         <SmartSearch value={query} onChange={setQuery} placeholder="Référence, ville, type…" resultCount={query ? filtered.length : undefined} />
@@ -63,16 +59,15 @@ export function Properties() {
       </div>
 
       <div className="nemea-grid-cards">
-        {filtered.map((property, i) => {
+        {filtered.map((property) => {
           const matches = allMatches.find((m) => m.property.id === property.id)
           return (
-            <Reveal key={property.id} delay={i * 60}>
-              <PropertyCard
-                property={property}
-                topMatchScore={matches?.matches[0]?.score}
-                matchCount={matches?.matches.length}
-              />
-            </Reveal>
+            <PropertyCard
+              key={property.id}
+              property={property}
+              topMatchScore={matches?.matches[0]?.score}
+              matchCount={matches?.matches.length}
+            />
           )
         })}
       </div>

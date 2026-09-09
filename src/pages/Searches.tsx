@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom'
 import { Plus } from 'lucide-react'
 import { SearchCard } from '../components/cards/SearchCard'
 import { PageHeader } from '../components/ui/PageHeader'
-import { Reveal } from '../components/ui/Reveal'
 import { SmartSearch } from '../components/ui/SmartSearch'
 import { useApp } from '../store/AppContext'
 
@@ -32,15 +31,13 @@ export function Searches() {
   const activeCount = searches.filter((s) => s.active).length
 
   return (
-    <div className="space-y-5 sm:space-y-6 nemea-page">
-      <Reveal>
-        <PageHeader
-          eyebrow="Recherches"
-          title={`${activeCount} active${activeCount > 1 ? 's' : ''} sur ${searches.length}`}
-          subtitle="Chaque recherche est comparée automatiquement avec vos biens disponibles."
-          action={<Link to="/recherches/nouveau" className="btn-primary !text-xs sm:!text-sm"><Plus size={16} /> Nouvelle</Link>}
-        />
-      </Reveal>
+    <div className="space-y-5 sm:space-y-6 nemea-page content-page">
+      <PageHeader
+        eyebrow="Recherches"
+        title={`${activeCount} active${activeCount > 1 ? 's' : ''} sur ${searches.length}`}
+        subtitle="Chaque recherche est comparée automatiquement avec vos biens disponibles."
+        action={<Link to="/recherches/nouveau" className="btn-primary !text-xs sm:!text-sm"><Plus size={16} /> Nouvelle</Link>}
+      />
 
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="flex-1">

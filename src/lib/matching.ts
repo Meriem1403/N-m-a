@@ -133,7 +133,7 @@ export function matchPropertyToSearch(
     matchType(c, property),
     matchSurface(c, property),
     evaluateBooleanCriterion(c.terrace, property.terrace, CRITERION_LABELS.terrace),
-    evaluateBooleanCriterion(c.balcony, property.balcony, CRITERION_LABELS.balcon),
+    evaluateBooleanCriterion(c.balcony, property.balcony, CRITERION_LABELS.balcony),
     evaluateBooleanCriterion(c.garden, property.garden, CRITERION_LABELS.garden),
     evaluateBooleanCriterion(c.parking, property.parking, CRITERION_LABELS.parking),
     evaluateBooleanCriterion(c.garage, property.garage, CRITERION_LABELS.garage),

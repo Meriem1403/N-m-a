@@ -2,7 +2,6 @@ import { Sparkles, Users, Building2, TrendingUp } from 'lucide-react'
 import { MatchCard } from '../components/cards/MatchCard'
 import { PropertyCard } from '../components/cards/PropertyCard'
 import { DashboardHero } from '../components/ui/DashboardHero'
-import { Reveal } from '../components/ui/Reveal'
 import { SectionHeader } from '../components/ui/SectionHeader'
 import { StatCard } from '../components/ui/StatCard'
 import { useApp } from '../store/AppContext'
@@ -18,45 +17,38 @@ export function Dashboard() {
 
   return (
     <div className="content-page space-y-6 sm:space-y-8">
-      <Reveal>
-        <DashboardHero matchCount={totalMatches} profileCount={profiles.length} />
-      </Reveal>
+      <DashboardHero matchCount={totalMatches} profileCount={profiles.length} />
 
       <div className="nemea-stats">
-        <Reveal delay={80}><StatCard label="Profils" value={profiles.length} icon={Users} tone="indigo" delay={50} /></Reveal>
-        <Reveal delay={120}><StatCard label="Biens actifs" value={properties.filter((p) => p.status === 'disponible').length} icon={Building2} tone="cyan" delay={100} /></Reveal>
-        <Reveal delay={160}><StatCard label="Correspondances" value={totalMatches} icon={Sparkles} tone="violet" delay={150} /></Reveal>
-        <Reveal delay={200}><StatCard label="Taux moyen" value={totalMatches > 0 ? `${avgScore}%` : '—'} icon={TrendingUp} tone="green" delay={200} animate={totalMatches > 0} /></Reveal>
+        <StatCard label="Profils" value={profiles.length} icon={Users} tone="indigo" delay={50} />
+        <StatCard label="Biens actifs" value={properties.filter((p) => p.status === 'disponible').length} icon={Building2} tone="cyan" delay={100} />
+        <StatCard label="Correspondances" value={totalMatches} icon={Sparkles} tone="violet" delay={150} />
+        <StatCard label="Taux moyen" value={totalMatches > 0 ? `${avgScore}%` : '—'} icon={TrendingUp} tone="green" delay={200} animate={totalMatches > 0} />
       </div>
 
       {topMatches.length > 0 && (
-        <Reveal delay={100}>
-          <section className="nemea-panel nemea-panel--glow">
-            <SectionHeader title="Personnes à contacter" href="/correspondances" />
-            <div className="space-y-3">
-              {topMatches.map(({ match, property }, i) => (
-                <MatchCard key={`${match.profileId}-${match.searchId}`} match={match} property={property} rank={i + 1} delay={i * 80} />
-              ))}
-            </div>
-          </section>
-        </Reveal>
+        <section className="nemea-panel nemea-panel--glow">
+          <SectionHeader title="Personnes à contacter" href="/correspondances" />
+          <div className="space-y-3">
+            {topMatches.map(({ match, property }, i) => (
+              <MatchCard key={`${match.profileId}-${match.searchId}`} match={match} property={property} rank={i + 1} animateScore delay={i * 80} />
+            ))}
+          </div>
+        </section>
       )}
 
       <section>
-        <Reveal>
-          <SectionHeader title="Biens récents" href="/biens" />
-        </Reveal>
+        <SectionHeader title="Biens récents" href="/biens" />
         <div className="nemea-grid-cards">
-          {properties.slice(0, 4).map((property, i) => {
+          {properties.slice(0, 4).map((property) => {
             const matches = allMatches.find((m) => m.property.id === property.id)
             return (
-              <Reveal key={property.id} delay={i * 70}>
-                <PropertyCard
-                  property={property}
-                  topMatchScore={matches?.matches[0]?.score}
-                  matchCount={matches?.matches.length}
-                />
-              </Reveal>
+              <PropertyCard
+                key={property.id}
+                property={property}
+                topMatchScore={matches?.matches[0]?.score}
+                matchCount={matches?.matches.length}
+              />
             )
           })}
         </div>

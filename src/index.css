@@ -468,30 +468,22 @@ a:focus:not(:focus-visible) {
   margin-top: -0.125rem;
 }
 
-/* Staggered reveal */
+/* Staggered reveal — transform only (jamais opacity 0) */
 .pro-heading--animated .pro-heading__meta {
-  animation: pro-reveal 0.65s var(--ease-smooth) backwards;
+  animation: pro-reveal 0.45s var(--ease-smooth);
 }
 
 .pro-heading--animated .pro-heading__title {
-  animation: pro-reveal 0.65s 0.07s var(--ease-smooth) backwards;
+  animation: pro-reveal 0.45s 0.05s var(--ease-smooth);
 }
 
 .pro-heading--animated .pro-heading__lead {
-  animation: pro-reveal 0.65s 0.14s var(--ease-smooth) backwards;
+  animation: pro-reveal 0.45s 0.1s var(--ease-smooth);
 }
 
 @keyframes pro-reveal {
-  from {
-    opacity: 0;
-    transform: translateY(14px);
-    filter: blur(3px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-    filter: blur(0);
-  }
+  from { transform: translateY(10px); }
+  to { transform: translateY(0); }
 }
 
 /* Legacy subtitle alias */
@@ -916,33 +908,27 @@ a:focus:not(:focus-visible) {
 }
 
 .mobile-dock-inner {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   align-items: stretch;
-  justify-content: flex-start;
   gap: 0.125rem;
-  padding: 0.375rem 0.375rem;
+  padding: 0.375rem 0.25rem;
   min-height: 3.5rem;
   border-radius: 0.75rem;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  background: var(--color-nemea-surface);
+  background: rgba(28, 34, 48, 0.95);
+  backdrop-filter: blur(12px);
   box-shadow: 0 -2px 16px rgba(0, 0, 0, 0.3);
   max-width: 100%;
-  overflow-x: auto;
-  overflow-y: hidden;
-  -webkit-overflow-scrolling: touch;
-  scroll-snap-type: x proximity;
 }
 
 .mobile-dock-link {
   display: flex;
-  flex: 0 0 auto;
-  min-width: 3.35rem;
-  scroll-snap-align: start;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.15rem;
-  padding: 0.375rem 0.25rem;
+  gap: 0.2rem;
+  padding: 0.375rem 0.125rem;
   border-radius: 0.5rem;
   font-size: 0.5625rem;
   font-weight: 500;
@@ -952,6 +938,10 @@ a:focus:not(:focus-visible) {
   transition: color 0.2s, background 0.2s;
   min-height: 2.75rem;
   min-width: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-family: inherit;
 }
 
 .mobile-dock-link--active {
@@ -959,16 +949,25 @@ a:focus:not(:focus-visible) {
   background: rgba(99, 102, 241, 0.15);
 }
 
-.mobile-dock-label-short { display: none; }
-
-@media (max-width: 420px) {
-  .mobile-dock-label-full { display: none; }
-  .mobile-dock-label-short { display: inline; font-size: 0.5rem; }
+.mobile-dock-link--menu:hover {
+  color: var(--color-nemea-text);
+  background: rgba(255, 255, 255, 0.06);
 }
 
-@media (max-width: 360px) {
-  .mobile-dock-label-short { display: none; }
-  .mobile-dock-link { padding: 0.5rem 0.25rem; }
+.mobile-dock-label {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: center;
+  line-height: 1.1;
+  padding: 0 0.125rem;
+}
+
+@media (max-width: 380px) {
+  .mobile-dock-label { font-size: 0.5rem; }
+  .mobile-dock-link { padding: 0.35rem 0.0625rem; }
 }
 
 /* ── Forms ── */
@@ -1058,11 +1057,11 @@ a:focus:not(:focus-visible) {
 
 .animate-scale-in {
   animation: scale-in 0.4s var(--ease-spring) forwards;
-  opacity: 0;
 }
 
-.page-enter {
-  animation: fade-up 0.5s var(--ease-smooth) forwards;
+.page-content {
+  width: 100%;
+  min-width: 0;
 }
 
 .stagger-1 { animation-delay: 0.05s; }
@@ -1691,8 +1690,7 @@ a:focus:not(:focus-visible) {
 }
 
 .import-detected-panel {
-  animation: scale-in 0.45s var(--ease-spring) forwards;
-  opacity: 0;
+  animation: fade-up 0.35s var(--ease-smooth) forwards;
 }
 
 .import-chip-grid {
@@ -2051,51 +2049,80 @@ a:focus:not(:focus-visible) {
   color: rgba(165, 180, 252, 0.7);
 }
 
-.match-card__summary {
+/* Critères — pastilles lisibles (OK / partiel / manquant) */
+.match-card__criteria {
   margin-top: 0.75rem;
 }
 
-.match-card__meter {
+.match-card__criteria-head {
   display: flex;
-  gap: 2px;
-  height: 3px;
-  border-radius: 999px;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.4375rem;
+}
+
+.match-card__criteria-stat {
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.match-card__criteria-stat--ok {
+  color: rgba(94, 207, 143, 0.85);
+}
+
+.match-card__criteria-stat--gap {
+  color: rgba(248, 113, 113, 0.8);
+}
+
+.match-card__criteria-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3125rem;
+}
+
+.match-criterion {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  max-width: 100%;
+  padding: 0.1875rem 0.4375rem;
+  border-radius: 0.375rem;
+  border: 1px solid transparent;
+  font-size: 0.625rem;
+  font-weight: 500;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.match-criterion__label {
   overflow: hidden;
-  background: rgba(255, 255, 255, 0.06);
+  text-overflow: ellipsis;
 }
 
-.match-card__meter-seg {
-  flex: 1;
-  min-width: 3px;
-  border-radius: 1px;
+.match-criterion--match {
+  color: rgba(167, 243, 208, 0.95);
+  background: rgba(52, 211, 153, 0.12);
+  border-color: rgba(52, 211, 153, 0.28);
 }
 
-.match-card__meter-seg--match,
-.match-card__meter-seg--bonus {
-  background: rgba(52, 211, 153, 0.65);
+.match-criterion--bonus {
+  color: rgba(196, 181, 253, 0.95);
+  background: rgba(129, 140, 248, 0.12);
+  border-color: rgba(129, 140, 248, 0.28);
 }
 
-.match-card__meter-seg--partial {
-  background: rgba(255, 255, 255, 0.28);
+.match-criterion--partial {
+  color: rgba(253, 224, 171, 0.95);
+  background: rgba(251, 191, 36, 0.1);
+  border-color: rgba(251, 191, 36, 0.28);
 }
 
-.match-card__meter-seg--miss {
-  background: rgba(248, 113, 113, 0.55);
-}
-
-.match-card__summary-text {
-  margin: 0.375rem 0 0;
-  font-size: 0.6875rem;
-  line-height: 1.45;
-  color: rgba(255, 255, 255, 0.32);
-}
-
-.match-card__summary-ok {
-  color: rgba(180, 189, 212, 0.75);
-}
-
-.match-card__summary-issues {
-  color: rgba(248, 113, 113, 0.75);
+.match-criterion--miss {
+  color: rgba(254, 202, 202, 0.95);
+  background: rgba(248, 113, 113, 0.12);
+  border-color: rgba(248, 113, 113, 0.32);
 }
 
 .match-section__count {
@@ -2188,11 +2215,6 @@ a:focus:not(:focus-visible) {
 .mobile-dock-link--active {
   box-shadow: 0 0 16px rgba(99, 102, 241, 0.2);
   animation: dock-glow 3s ease-in-out infinite;
-}
-
-.mobile-dock-inner {
-  backdrop-filter: blur(16px);
-  background: rgba(28, 34, 48, 0.92) !important;
 }
 
 @keyframes orb-drift-1 {
