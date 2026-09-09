@@ -4,7 +4,7 @@ import type { ReactNode } from 'react'
 export function PageTransition({ children }: { children: ReactNode }) {
   const location = useLocation()
   return (
-    <div key={location.pathname} className="page-enter page-enter--enhanced">
+    <div key={location.pathname} className="page-enter">
       {children}
     </div>
   )

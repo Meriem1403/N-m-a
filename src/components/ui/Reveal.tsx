@@ -15,30 +15,46 @@ export function Reveal({ children, delay = 0, className }: RevealProps) {
     const el = ref.current
     if (!el) return
 
-    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    if (reduced) {
-      setVisible(true)
+    const show = () => setVisible(true)
+
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      show()
+      return
+    }
+
+    // Affichage immédiat si déjà visible (fix iOS / PWA / scroll interne)
+    const rect = el.getBoundingClientRect()
+    if (rect.top < window.innerHeight && rect.bottom > 0) {
+      show()
       return
     }
 
     const obs = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          setVisible(true)
+          show()
           obs.disconnect()
         }
       },
-      { threshold: 0.08, rootMargin: '0px 0px -40px 0px' },
+      { threshold: 0.01, rootMargin: '0px 0px 10% 0px' },
     )
+
     obs.observe(el)
-    return () => obs.disconnect()
+
+    // Filet de sécurité : ne jamais laisser une page vide
+    const fallback = window.setTimeout(show, 300)
+
+    return () => {
+      obs.disconnect()
+      window.clearTimeout(fallback)
+    }
   }, [])
 
   return (
     <div
       ref={ref}
       className={cn('reveal', visible && 'reveal--visible', className)}
-      style={{ transitionDelay: `${delay}ms` }}
+      style={{ transitionDelay: visible ? `${delay}ms` : undefined }}
     >
       {children}
     </div>

@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, Search, Building2, Sparkles } from 'lucide-react'
+import { LayoutDashboard, Users, Search, Building2, Sparkles, History, FileInput } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
 
 const items = [
@@ -7,12 +7,14 @@ const items = [
   { to: '/recherches', icon: Search, label: 'Recherches', short: 'Rech.' },
   { to: '/biens', icon: Building2, label: 'Biens', short: 'Biens' },
   { to: '/correspondances', icon: Sparkles, label: 'Matchs', short: 'Match' },
+  { to: '/import', icon: FileInput, label: 'Import', short: 'Imp.' },
+  { to: '/historique', icon: History, label: 'Historique', short: 'Hist.' },
 ]
 
 export function MobileDock() {
   return (
     <nav className="mobile-dock" aria-label="Navigation mobile">
-      <div className="mobile-dock-inner">
+      <div className="mobile-dock-inner scrollbar-hide">
         {items.map(({ to, icon: Icon, label, short, end }) => (
           <NavLink
             key={to}
