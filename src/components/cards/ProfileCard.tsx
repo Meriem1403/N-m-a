@@ -31,7 +31,7 @@ export function ProfileCard({ profile, searchCount = 0 }: ProfileCardProps) {
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between gap-2">
             <h3 className="text-base font-semibold text-white truncate">{profile.firstName} {profile.lastName}</h3>
-            <ChevronRight size={16} className="text-white/40 flex-shrink-0 profile-card__arrow" aria-hidden />
+            <ChevronRight size={16} className="text-nemea-subtle flex-shrink-0 profile-card__arrow" aria-hidden />
           </div>
           <div className="mt-1.5 flex flex-wrap gap-1.5">
             <Badge variant="muted">{sourceLabels[profile.source]}</Badge>
@@ -41,7 +41,11 @@ export function ProfileCard({ profile, searchCount = 0 }: ProfileCardProps) {
             {profile.phone && <span className="flex items-center gap-1.5 min-w-0"><Phone size={14} className="text-indigo-300 flex-shrink-0" aria-hidden />{profile.phone}</span>}
             {profile.email && <span className="flex items-center gap-1.5 truncate min-w-0"><Mail size={14} className="text-indigo-300 flex-shrink-0" aria-hidden />{profile.email}</span>}
           </div>
-          <p className="mt-2 text-xs text-[var(--color-nemea-subtle)]">Contact · {formatShortDate(profile.firstContactDate)}</p>
+          <p className="mt-2 text-xs text-[var(--color-nemea-subtle)]">
+            Premier contact · {formatShortDate(profile.firstContactDate)}
+            <span className="text-white/20 mx-1.5" aria-hidden>·</span>
+            Fiche · {formatShortDate(profile.createdAt)}
+          </p>
         </div>
       </div>
     </Link>

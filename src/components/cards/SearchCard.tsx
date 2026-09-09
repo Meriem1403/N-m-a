@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { ChevronRight, MapPin, Euro, Maximize } from 'lucide-react'
 import type { Profile, Search } from '../../types'
-import { criterionLabels, formatPrice } from '../../lib/utils'
+import { criterionLabels, formatPrice, formatShortDate } from '../../lib/utils'
 import { Badge } from '../ui/Badge'
 import { ScoreRing } from '../ui/ScoreRing'
 
@@ -36,7 +36,16 @@ export function SearchCard({ search, profile, topMatchScore, delay = 0 }: Search
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0 flex-1">
               <h3 className="text-base font-semibold text-white truncate">{search.label}</h3>
-              {profile && <p className="text-sm text-white/40 mt-0.5 truncate">{profile.firstName} {profile.lastName}</p>}
+              {profile && (
+                <p className="text-sm text-nemea-subtle mt-0.5 truncate">
+                  {profile.firstName} {profile.lastName}
+                  <span className="text-white/20 mx-1.5" aria-hidden>·</span>
+                  <span className="text-nemea-label">Créée {formatShortDate(search.createdAt)}</span>
+                </p>
+              )}
+              {!profile && (
+                <p className="text-xs text-nemea-label mt-0.5">Créée {formatShortDate(search.createdAt)}</p>
+              )}
             </div>
             <div className="flex items-center gap-2 flex-shrink-0">
               {topMatchScore !== undefined && (
@@ -58,7 +67,7 @@ export function SearchCard({ search, profile, topMatchScore, delay = 0 }: Search
             {c.surfaceMin && <Badge variant="muted"><Maximize size={10} className="mr-1 inline" />≥ {c.surfaceMin} m²</Badge>}
           </div>
           {activeCriteria.length > 0 && (
-            <p className="mt-3 pt-3 border-t border-white/6 text-xs text-white/35 line-clamp-2">{activeCriteria.join(' · ')}</p>
+            <p className="mt-3 pt-3 border-t border-white/6 text-xs text-nemea-subtle line-clamp-2">{activeCriteria.join(' · ')}</p>
           )}
         </div>
       </div>

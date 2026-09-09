@@ -120,7 +120,7 @@ export function SmartField({
           ) : isComplete ? (
             <Check size={15} className="text-emerald-400 smart-icon-pop" />
           ) : suffix ? (
-            <span className="text-xs text-white/30">{suffix}</span>
+            <span className="text-xs text-nemea-label">{suffix}</span>
           ) : null}
         </div>
 

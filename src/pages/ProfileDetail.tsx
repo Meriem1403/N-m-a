@@ -24,7 +24,7 @@ export function ProfileDetail() {
   if (!profile) {
     return (
       <div className="text-center py-16">
-        <p className="text-white/40">Profil introuvable</p>
+        <p className="text-nemea-subtle">Profil introuvable</p>
         <Link to="/profils" className="text-indigo-300 text-sm mt-2 inline-block">Retour</Link>
       </div>
     )
@@ -54,7 +54,8 @@ export function ProfileDetail() {
                 />
                 <div className="mt-2 flex flex-wrap gap-1.5">
                   <Badge>{sourceLabels[profile.source]}</Badge>
-                  <Badge variant="muted"><Calendar size={10} className="mr-1 inline" />{formatDate(profile.firstContactDate)}</Badge>
+                  <Badge variant="muted"><Calendar size={10} className="mr-1 inline" />Contact {formatDate(profile.firstContactDate)}</Badge>
+                  <Badge variant="muted"><Calendar size={10} className="mr-1 inline" />Fiche {formatDate(profile.createdAt)}</Badge>
                   <Badge variant="accent">{searches.length} recherche{searches.length > 1 ? 's' : ''}</Badge>
                 </div>
               </div>
@@ -70,17 +71,17 @@ export function ProfileDetail() {
             </div>
             <div className="mt-4 flex flex-col sm:flex-row sm:flex-wrap gap-3 text-sm">
               {profile.phone && (
-                <a href={`tel:${profile.phone.replace(/\s/g, '')}`} className="flex items-center gap-2 text-white/45 hover:text-sky-300">
+                <a href={`tel:${profile.phone.replace(/\s/g, '')}`} className="flex items-center gap-2 text-nemea-muted hover:text-sky-300">
                   <Phone size={16} />{profile.phone}
                 </a>
               )}
               {profile.email && (
-                <a href={`mailto:${profile.email}`} className="flex items-center gap-2 text-white/45 hover:text-sky-300 truncate max-w-full">
+                <a href={`mailto:${profile.email}`} className="flex items-center gap-2 text-nemea-muted hover:text-sky-300 truncate max-w-full">
                   <Mail size={16} />{profile.email}
                 </a>
               )}
             </div>
-            {profile.notes && <p className="mt-4 text-sm text-white/45 leading-relaxed">{profile.notes}</p>}
+            {profile.notes && <p className="mt-4 text-sm text-nemea-muted leading-relaxed">{profile.notes}</p>}
           </div>
         </div>
       </div>
@@ -101,7 +102,7 @@ export function ProfileDetail() {
           </div>
         ) : (
           <div className="nemea-panel text-center py-8">
-            <p className="text-sm text-white/40">Aucune recherche associée.</p>
+            <p className="text-sm text-nemea-subtle">Aucune recherche associée.</p>
             <Link to={`/recherches/nouveau?profileId=${profile.id}`} className="btn-ghost mt-3 inline-flex">Créer une recherche</Link>
           </div>
         )}
@@ -115,7 +116,7 @@ export function ProfileDetail() {
               <div key={ex.id} className="nemea-card flex gap-3">
                 <MessageSquare size={16} className="text-sky-300 mt-0.5 flex-shrink-0" />
                 <div className="min-w-0">
-                  <p className="text-xs text-white/35">{formatDate(ex.date)} · {ex.type}</p>
+                  <p className="text-xs text-nemea-subtle">{formatDate(ex.date)} · {ex.type}</p>
                   <p className="text-sm text-white/80 mt-1 break-words">{ex.content}</p>
                 </div>
               </div>

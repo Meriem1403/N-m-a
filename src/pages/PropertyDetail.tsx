@@ -28,7 +28,7 @@ export function PropertyDetail() {
   if (!property) {
     return (
       <div className="text-center py-16">
-        <p className="text-white/40">Bien introuvable</p>
+        <p className="text-nemea-subtle">Bien introuvable</p>
         <Link to="/biens" className="text-indigo-300 text-sm mt-2 inline-block">Retour</Link>
       </div>
     )
@@ -58,7 +58,7 @@ export function PropertyDetail() {
             <Badge variant="muted"><MapPin size={10} className="mr-1 inline" />{property.city}{property.district && ` · ${property.district}`}</Badge>
             <Badge variant="muted"><Maximize size={10} className="mr-1 inline" />{property.surface} m² · {property.rooms} pièces</Badge>
           </div>
-          {property.description && <p className="mt-4 text-sm text-white/45 leading-relaxed">{property.description}</p>}
+          {property.description && <p className="mt-4 text-sm text-nemea-muted leading-relaxed">{property.description}</p>}
           <div className="mt-4 flex flex-wrap gap-1.5">
             {features.filter((f) => property[f.key]).map(({ key, label }) => (
               <span key={key} className="nemea-badge nemea-badge--success">✓ {label}</span>

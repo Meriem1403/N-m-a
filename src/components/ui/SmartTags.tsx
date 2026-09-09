@@ -46,7 +46,7 @@ export function SmartTags({ label, tags, onChange, suggestions, placeholder = 'A
               if (e.key === 'Backspace' && !input && tags.length) removeTag(tags[tags.length - 1])
             }}
             placeholder={tags.length ? '' : placeholder}
-            className="flex-1 min-w-[120px] bg-transparent px-1 py-1 text-sm text-white outline-none placeholder:text-white/25"
+            className="flex-1 min-w-[120px] bg-transparent px-1 py-1 text-sm text-white outline-none placeholder:text-nemea-label"
           />
         </div>
         {focused && hints.length > 0 && (
@@ -57,7 +57,7 @@ export function SmartTags({ label, tags, onChange, suggestions, placeholder = 'A
                 type="button"
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => addTag(hint)}
-                className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] text-white/50 hover:bg-white/6 hover:text-white/80"
+                className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] text-nemea-subtle hover:bg-white/6 hover:text-nemea-text"
               >
                 <Plus size={10} />{hint.replace(' arrondissement', '')}
               </button>

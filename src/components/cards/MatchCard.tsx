@@ -98,9 +98,9 @@ export function MatchCard({ match, property, rank, delay = 0, animateScore = fal
             </p>
             <ChevronRight size={16} className="text-white/25 flex-shrink-0 mt-0.5 match-card__chevron" aria-hidden />
           </div>
-          <p className="text-xs text-white/40 mt-0.5 truncate">{match.search.label}</p>
+          <p className="text-xs text-nemea-subtle mt-0.5 truncate">{match.search.label}</p>
           {property && (
-            <p className="mt-1 text-xs text-white/35 flex items-center gap-1 truncate">
+            <p className="mt-1 text-xs text-nemea-subtle flex items-center gap-1 truncate">
               <Building2 size={12} className="flex-shrink-0 opacity-60" aria-hidden />
               {property.reference} · {property.type}
             </p>

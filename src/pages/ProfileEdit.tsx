@@ -30,7 +30,7 @@ export function ProfileEdit() {
   if (!profile) {
     return (
       <div className="text-center py-16">
-        <p className="text-white/40">Profil introuvable</p>
+        <p className="text-nemea-subtle">Profil introuvable</p>
         <Link to="/profils" className="text-indigo-300 text-sm mt-2 inline-block">Retour</Link>
       </div>
     )
@@ -90,7 +90,7 @@ export function ProfileEdit() {
             <div className="pt-3 border-t border-white/6 space-y-2 max-h-48 overflow-y-auto scrollbar-hide">
               {profile.exchanges.map((ex) => (
                 <div key={ex.id} className="text-sm rounded-lg bg-white/[0.02] border border-white/6 p-2.5">
-                  <p className="text-xs text-white/35">{formatDate(ex.date)} · {ex.type}</p>
+                  <p className="text-xs text-nemea-subtle">{formatDate(ex.date)} · {ex.type}</p>
                   <p className="text-white/70 mt-0.5">{ex.content}</p>
                 </div>
               ))}

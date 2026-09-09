@@ -22,7 +22,7 @@ export function SmartCriterion({ label, value, onChange }: SmartCriterionProps) 
             className={`rounded-lg border px-2.5 py-1.5 text-[11px] font-medium transition-all active:scale-95 ${
               value === level
                 ? 'border-indigo-400/35 bg-indigo-500/15 text-indigo-200'
-                : 'border-white/8 bg-white/3 text-white/35 hover:border-indigo-400/25 hover:text-white/60'
+                : 'border-white/14 bg-black/25 text-nemea-muted hover:border-indigo-400/30 hover:text-nemea-text'
             }`}
           >
             {criterionLabels[level]}

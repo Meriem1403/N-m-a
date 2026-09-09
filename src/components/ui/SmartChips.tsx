@@ -32,7 +32,7 @@ export function SmartChips<T extends string>({ label, options, selected, onChang
                 'rounded-lg border px-3 py-2 text-xs font-medium transition-all active:scale-95',
                 active
                   ? 'border-indigo-400/35 bg-indigo-500/15 text-indigo-200 shadow-[0_0_12px_rgba(124,127,245,0.15)]'
-                  : 'border-white/8 bg-white/3 text-white/40 hover:border-indigo-400/25 hover:text-white/70',
+                  : 'border-white/14 bg-black/25 text-nemea-muted hover:border-indigo-400/30 hover:text-nemea-text',
               )}
             >
               {opt.label}

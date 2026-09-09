@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ArrowLeft, History, Sparkles, User } from 'lucide-react'
+import { ArrowLeft, Calendar, History, Sparkles, User } from 'lucide-react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { PropertyCard } from '../components/cards/PropertyCard'
 import { Badge } from '../components/ui/Badge'
@@ -21,7 +21,7 @@ export function SearchDetail() {
   if (!search) {
     return (
       <div className="text-center py-16">
-        <p className="text-white/40">Recherche introuvable</p>
+        <p className="text-nemea-subtle">Recherche introuvable</p>
         <Link to="/recherches" className="text-indigo-300 text-sm mt-2 inline-block">Retour</Link>
       </div>
     )
@@ -38,11 +38,12 @@ export function SearchDetail() {
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2 mb-2">
               <Badge variant={search.active ? 'success' : 'muted'}>{search.active ? 'Active' : 'Inactive'}</Badge>
+              <Badge variant="muted"><Calendar size={10} className="mr-1 inline" />Créée {formatDate(search.createdAt)}</Badge>
               {matches[0] && <Badge variant="accent"><Sparkles size={10} className="mr-1 inline" />Meilleur match {matches[0].match.score}%</Badge>}
             </div>
             <h1 className="text-xl sm:text-2xl font-semibold glow-text break-words">{search.label}</h1>
             {profile && (
-              <Link to={`/profils/${profile.id}`} className="mt-2 inline-flex items-center gap-2 text-sm text-white/45 hover:text-indigo-300">
+              <Link to={`/profils/${profile.id}`} className="mt-2 inline-flex items-center gap-2 text-sm text-nemea-muted hover:text-indigo-300">
                 <User size={14} />{profile.firstName} {profile.lastName}
               </Link>
             )}
@@ -63,7 +64,7 @@ export function SearchDetail() {
               {c.cities.map((city) => <Badge key={city} variant="muted">{city}</Badge>)}
             </div>
             {c.districts.length > 0 && (
-              <p className="text-sm text-white/45">{c.districts.map((d) => d.replace(' arrondissement', '')).join(', ')}</p>
+              <p className="text-sm text-nemea-muted">{c.districts.map((d) => d.replace(' arrondissement', '')).join(', ')}</p>
             )}
             <div className="responsive-grid-2">
               {c.budgetMax && <Stat label="Budget max" value={formatPrice(c.budgetMax)} />}
@@ -80,7 +81,7 @@ export function SearchDetail() {
                 }
                 return (
                   <div key={key} className="flex justify-between text-sm">
-                    <span className="text-white/45">{labels[key]}</span>
+                    <span className="text-nemea-muted">{labels[key]}</span>
                     <span className="text-indigo-200/90">{criterionLabels[level]}</span>
                   </div>
                 )
@@ -92,12 +93,12 @@ export function SearchDetail() {
         <section className="nemea-panel animate-fade-up stagger-2">
           <h2 className="nemea-panel-title flex items-center gap-2"><History size={16} /> Historique</h2>
           {search.history.length === 0 ? (
-            <p className="text-sm text-white/35">Aucune modification enregistrée.</p>
+            <p className="text-sm text-nemea-subtle">Aucune modification enregistrée.</p>
           ) : (
             <div className="space-y-3 max-h-80 overflow-y-auto scrollbar-hide">
               {search.history.map((entry) => (
                 <div key={entry.id} className="rounded-xl border border-white/6 bg-white/[0.02] p-3">
-                  <p className="text-xs text-white/35">{formatDate(entry.date)}</p>
+                  <p className="text-xs text-nemea-subtle">{formatDate(entry.date)}</p>
                   {entry.note && <p className="text-sm text-white/70 mt-1">{entry.note}</p>}
                   <div className="mt-2 flex flex-wrap gap-1">
                     {entry.changes.budgetMax !== undefined && <Badge variant="accent">Budget: {formatPrice(entry.changes.budgetMax)}</Badge>}
@@ -135,7 +136,7 @@ export function SearchDetail() {
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-xl bg-white/[0.03] border border-white/6 p-3">
-      <p className="text-[10px] uppercase tracking-wide text-white/35">{label}</p>
+      <p className="text-[10px] uppercase tracking-wide text-nemea-subtle">{label}</p>
       <p className="text-base font-semibold text-white mt-0.5 tabular-nums">{value}</p>
     </div>
   )

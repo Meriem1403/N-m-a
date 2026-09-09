@@ -24,7 +24,7 @@ export function SearchEdit() {
   if (!search) {
     return (
       <div className="text-center py-16">
-        <p className="text-white/40">Recherche introuvable</p>
+        <p className="text-nemea-subtle">Recherche introuvable</p>
         <Link to="/recherches" className="text-indigo-300 text-sm mt-2 inline-block">Retour</Link>
       </div>
     )

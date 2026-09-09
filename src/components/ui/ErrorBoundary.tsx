@@ -27,7 +27,7 @@ export class ErrorBoundary extends Component<Props, State> {
           <p className="text-sm font-medium text-white/80">
             {this.props.label ?? 'Impossible d\'afficher cette page.'}
           </p>
-          <p className="mt-2 text-xs text-white/40 break-words">{this.state.error.message}</p>
+          <p className="mt-2 text-xs text-nemea-subtle break-words">{this.state.error.message}</p>
           <button
             type="button"
             className="btn-ghost mt-4"

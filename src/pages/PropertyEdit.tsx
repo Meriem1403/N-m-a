@@ -15,7 +15,7 @@ const statusOptions = Object.entries(statusLabels).map(([value, label]) => ({ va
 
 function Toggle({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }) {
   return (
-    <button type="button" onClick={() => onChange(!checked)} className={`flex items-center justify-between w-full rounded-xl border px-4 py-3 text-sm transition-all ${checked ? 'border-indigo-400/30 bg-indigo-500/10 text-indigo-200' : 'border-white/8 bg-white/3 text-white/45'}`}>
+    <button type="button" onClick={() => onChange(!checked)} className={`flex items-center justify-between w-full rounded-xl border px-4 py-3 text-sm transition-all ${checked ? 'border-indigo-400/30 bg-indigo-500/10 text-indigo-200' : 'border-white/8 bg-white/3 text-nemea-muted'}`}>
       <span>{label}</span>
       <span className={`w-10 h-5 rounded-full relative flex-shrink-0 ${checked ? 'bg-indigo-500' : 'bg-white/15'}`}>
         <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${checked ? 'translate-x-5' : 'translate-x-0.5'}`} />
@@ -48,7 +48,7 @@ export function PropertyEdit() {
   if (!property) {
     return (
       <div className="text-center py-16">
-        <p className="text-white/40">Bien introuvable</p>
+        <p className="text-nemea-subtle">Bien introuvable</p>
         <Link to="/biens" className="text-indigo-300 text-sm mt-2 inline-block">Retour</Link>
       </div>
     )

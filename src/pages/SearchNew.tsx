@@ -74,7 +74,7 @@ export function SearchNew() {
           <SmartSelect label="Prospect associé" value={profileId} onChange={setProfileId} options={profileOptions} />
           <div>
             <SmartField label="Libellé" value={label} onChange={(v) => { setLabel(v); setAutoLabel(false) }} smartFormat={false} placeholder="T3 Marseille 8e" />
-            <label className="mt-2 flex items-center gap-2 text-xs text-white/35 cursor-pointer">
+            <label className="mt-2 flex items-center gap-2 text-xs text-nemea-subtle cursor-pointer">
               <input type="checkbox" checked={autoLabel} onChange={(e) => setAutoLabel(e.target.checked)} className="accent-indigo-500" />
               Générer automatiquement le libellé
             </label>

@@ -1,9 +1,9 @@
 import { useEffect, useRef } from 'react'
 
 const nebulae = [
-  { top: '8%', left: '12%', size: 480, color: 'rgba(124, 127, 245, 0.14)' },
-  { top: '55%', left: '72%', size: 520, color: 'rgba(192, 132, 252, 0.1)' },
-  { top: '72%', left: '18%', size: 400, color: 'rgba(56, 189, 248, 0.08)' },
+  { top: '8%', left: '12%', size: 480, color: 'rgba(129, 140, 248, 0.26)' },
+  { top: '55%', left: '72%', size: 520, color: 'rgba(192, 132, 252, 0.2)' },
+  { top: '72%', left: '18%', size: 400, color: 'rgba(56, 189, 248, 0.16)' },
 ]
 
 export function CosmicBackground() {
@@ -46,9 +46,9 @@ export function CosmicBackground() {
           className="absolute inset-0"
           style={{
             background: `
-              radial-gradient(ellipse 80% 50% at 50% 0%, rgba(99, 102, 241, 0.18) 0%, transparent 55%),
-              radial-gradient(ellipse 50% 40% at 90% 90%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
-              linear-gradient(180deg, rgba(22, 28, 40, 0.95) 0%, rgba(20, 24, 32, 0.98) 45%, rgba(19, 23, 34, 1) 100%)
+              radial-gradient(ellipse 80% 50% at 50% 0%, rgba(165, 180, 252, 0.32) 0%, transparent 55%),
+              radial-gradient(ellipse 50% 40% at 90% 90%, rgba(139, 92, 246, 0.2) 0%, transparent 50%),
+              linear-gradient(180deg, rgba(90, 112, 136, 0.65) 0%, rgba(66, 82, 106, 0.78) 45%, rgba(58, 74, 96, 0.88) 100%)
             `,
           }}
         />

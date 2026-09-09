@@ -38,7 +38,7 @@ export function PropertyCard({ property, topMatchScore, matchCount }: PropertyCa
             <p className="text-xs font-semibold text-[var(--color-nemea-subtle)] tracking-wide uppercase">{property.reference}</p>
             <h3 className="mt-0.5 text-lg sm:text-xl font-semibold text-white tabular-nums">{formatPrice(property.price)}</h3>
           </div>
-          <ChevronRight size={16} className="text-white/40 mt-2 flex-shrink-0 property-card__arrow" aria-hidden />
+          <ChevronRight size={16} className="text-nemea-subtle mt-2 flex-shrink-0 property-card__arrow" aria-hidden />
         </div>
         <div className="mt-2.5 flex flex-wrap gap-1.5">
           <Badge variant="accent">{property.type}</Badge>
