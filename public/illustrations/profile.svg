@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 160" fill="none" role="img" aria-label="Profil prospect">
+  <rect width="200" height="160" rx="16" fill="#1c2230"/>
+  <circle cx="100" cy="58" r="28" fill="#242d3d" stroke="#818cf8" stroke-width="1.5" opacity="0.9"/>
+  <path d="M52 130c8-22 28-36 48-36s40 14 48 36" stroke="#a5b4fc" stroke-width="1.5" stroke-linecap="round" fill="#242d3d"/>
+  <circle cx="100" cy="58" r="12" fill="#363f52"/>
+  <path d="M30 40h24M146 40h24" stroke="#818cf8" stroke-width="1" opacity="0.4" stroke-linecap="round"/>
+  <circle cx="168" cy="32" r="6" fill="#818cf8" opacity="0.25"/>
+</svg>

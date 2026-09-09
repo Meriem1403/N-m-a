@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 160" fill="none" role="img" aria-label="Import intelligent">
+  <rect width="200" height="160" rx="16" fill="#1c2230"/>
+  <rect x="36" y="40" width="128" height="80" rx="8" fill="#242d3d" stroke="#818cf8" stroke-width="1.5"/>
+  <path d="M52 62h96M52 78h72M52 94h84" stroke="#4a5568" stroke-width="2" stroke-linecap="round"/>
+  <path d="M52 62h48" stroke="#a5b4fc" stroke-width="2" stroke-linecap="round"/>
+  <circle cx="148" cy="108" r="22" fill="#363f52" stroke="#818cf8" stroke-width="1.5"/>
+  <path d="M140 108l6 6 12-12" stroke="#c4b5fd" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M100 24l8 8-8 8-8-8 8-8z" fill="#818cf8" opacity="0.35"/>
+</svg>

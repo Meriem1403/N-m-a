@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 160" fill="none" role="img" aria-label="Recherche immobilière">
+  <rect width="200" height="160" rx="16" fill="#1c2230"/>
+  <circle cx="88" cy="72" r="32" stroke="#818cf8" stroke-width="2" fill="#242d3d"/>
+  <path d="M112 96l28 28" stroke="#a5b4fc" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="88" cy="72" r="14" stroke="#c4b5fd" stroke-width="1" opacity="0.5"/>
+  <path d="M48 120h104" stroke="#363f52" stroke-width="1"/>
+  <rect x="48" y="126" width="40" height="8" rx="2" fill="#818cf8" opacity="0.3"/>
+  <rect x="96" y="126" width="56" height="8" rx="2" fill="#363f52"/>
+</svg>
