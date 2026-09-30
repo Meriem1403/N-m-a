@@ -18,7 +18,26 @@ import {
   syncRemoveProperty,
   syncRemoveSearch,
 } from '../lib/supabaseRepo'
-import type { Exchange, MatchResult, ParsedImport, Profile, Property, Search, SearchCriteria, SearchHistoryEntry } from '../types'
+import {
+  createIntakeToken,
+  fetchClientIntakes,
+  fetchIntakeTokens,
+  patchClientIntake,
+  setIntakeTokenActive,
+} from '../lib/intakeRepo'
+import { intakeToParsedImport } from '../lib/intakeUtils'
+import type {
+  ClientIntake,
+  Exchange,
+  IntakeToken,
+  MatchResult,
+  ParsedImport,
+  Profile,
+  Property,
+  Search,
+  SearchCriteria,
+  SearchHistoryEntry,
+} from '../types'
 
 interface AppState {
   profiles: Profile[]
@@ -52,6 +71,15 @@ interface AppContextValue extends AppState {
   getMatchesForSearch: (searchId: string) => { property: Property; match: MatchResult }[]
   getAllMatches: () => { property: Property; matches: MatchResult[] }[]
   getAllHistory: () => { profile: Profile; search: Search; entry: SearchHistoryEntry }[]
+  intakeTokens: IntakeToken[]
+  clientIntakes: ClientIntake[]
+  pendingIntakeCount: number
+  refreshIntakes: () => Promise<void>
+  createShareLink: (label?: string) => Promise<IntakeToken>
+  deactivateShareLink: (tokenId: string) => Promise<void>
+  processClientIntake: (intakeId: string, agentNotes?: string) => Promise<string>
+  dismissClientIntake: (intakeId: string) => Promise<void>
+  updateIntakeNotes: (intakeId: string, notes: string) => Promise<void>
 }
 
 const AppContext = createContext<AppContextValue | null>(null)
@@ -109,6 +137,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [profiles, setProfiles] = useState<Profile[]>(cloud ? [] : demoProfiles)
   const [searches, setSearches] = useState<Search[]>(cloud ? [] : demoSearches)
   const [properties, setProperties] = useState<Property[]>(cloud ? [] : demoProperties)
+  const [intakeTokens, setIntakeTokens] = useState<IntakeToken[]>([])
+  const [clientIntakes, setClientIntakes] = useState<ClientIntake[]>([])
+
+  const refreshIntakes = useCallback(async () => {
+    if (!cloud) return
+    try {
+      const [tokens, intakes] = await Promise.all([fetchIntakeTokens(), fetchClientIntakes()])
+      setIntakeTokens(tokens)
+      setClientIntakes(intakes)
+    } catch (err) {
+      console.error(err)
+    }
+  }, [cloud])
 
   const runSync = useCallback((task: () => Promise<void>) => {
     void task().catch((err: unknown) => {
@@ -142,6 +183,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setProfiles(data.profiles)
         setSearches(data.searches)
         setProperties(data.properties)
+        await refreshIntakes()
       } catch (err) {
         console.error(err)
         if (!cancelled) {
@@ -155,7 +197,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true
     }
-  }, [cloud, session?.user.id])
+  }, [cloud, session?.user.id, refreshIntakes])
+
+  useEffect(() => {
+    if (!cloud || !session) return
+    const id = window.setInterval(() => {
+      void refreshIntakes()
+    }, 45_000)
+    const onFocus = () => void refreshIntakes()
+    window.addEventListener('focus', onFocus)
+    return () => {
+      clearInterval(id)
+      window.removeEventListener('focus', onFocus)
+    }
+  }, [cloud, session, refreshIntakes])
 
   const addProfile = useCallback((data: Omit<Profile, 'id' | 'createdAt' | 'updatedAt'>) => {
     const now = new Date().toISOString()
@@ -347,6 +402,49 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const clearSyncError = useCallback(() => setSyncError(null), [])
 
+  const pendingIntakeCount = useMemo(
+    () => clientIntakes.filter((i) => i.status === 'pending').length,
+    [clientIntakes],
+  )
+
+  const createShareLink = useCallback(async (label?: string) => {
+    const token = await createIntakeToken(label)
+    await refreshIntakes()
+    return token
+  }, [refreshIntakes])
+
+  const deactivateShareLink = useCallback(async (tokenId: string) => {
+    await setIntakeTokenActive(tokenId, false)
+    await refreshIntakes()
+  }, [refreshIntakes])
+
+  const updateIntakeNotes = useCallback(async (intakeId: string, notes: string) => {
+    await patchClientIntake(intakeId, { agentNotes: notes })
+    await refreshIntakes()
+  }, [refreshIntakes])
+
+  const processClientIntake = useCallback(async (intakeId: string, agentNotes?: string) => {
+    const intake = clientIntakes.find((i) => i.id === intakeId)
+    if (!intake) throw new Error('Demande introuvable')
+    const parsed = intakeToParsedImport(intake)
+    if (agentNotes?.trim()) {
+      parsed.notes = [parsed.notes, agentNotes.trim()].filter(Boolean).join('\n\n')
+    }
+    const { profile } = importFromParsed(parsed)
+    await patchClientIntake(intakeId, {
+      status: 'processed',
+      processedProfileId: profile.id,
+      agentNotes: agentNotes?.trim() || intake.agentNotes,
+    })
+    await refreshIntakes()
+    return profile.id
+  }, [clientIntakes, importFromParsed, refreshIntakes])
+
+  const dismissClientIntake = useCallback(async (intakeId: string) => {
+    await patchClientIntake(intakeId, { status: 'dismissed' })
+    await refreshIntakes()
+  }, [refreshIntakes])
+
   const value = useMemo(
     () => ({
       profiles, searches, properties,
@@ -357,6 +455,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       importFromParsed,
       getProfile, getSearch, getProperty, getSearchesForProfile,
       getMatchesForProperty, getMatchesForSearch, getAllMatches, getAllHistory,
+      intakeTokens, clientIntakes, pendingIntakeCount, refreshIntakes,
+      createShareLink, deactivateShareLink, processClientIntake, dismissClientIntake, updateIntakeNotes,
     }),
     [
       profiles, searches, properties,
@@ -367,6 +467,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       importFromParsed,
       getProfile, getSearch, getProperty, getSearchesForProfile,
       getMatchesForProperty, getMatchesForSearch, getAllMatches, getAllHistory,
+      intakeTokens, clientIntakes, pendingIntakeCount, refreshIntakes,
+      createShareLink, deactivateShareLink, processClientIntake, dismissClientIntake, updateIntakeNotes,
     ],
   )
 

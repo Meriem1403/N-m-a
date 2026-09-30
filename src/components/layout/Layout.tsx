@@ -18,6 +18,7 @@ const pageTitles: Record<string, string> = {
   '/correspondances': 'Correspondances',
   '/historique': 'Historique',
   '/import': 'Import rapide',
+  '/formulaires': 'Formulaires client',
 }
 
 export function Layout() {

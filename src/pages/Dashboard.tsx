@@ -1,4 +1,5 @@
-import { Sparkles, Users, Building2, TrendingUp } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { Bell, Sparkles, Users, Building2, TrendingUp } from 'lucide-react'
 import { MatchCard } from '../components/cards/MatchCard'
 import { PropertyCard } from '../components/cards/PropertyCard'
 import { DashboardHero } from '../components/ui/DashboardHero'
@@ -7,7 +8,7 @@ import { StatCard } from '../components/ui/StatCard'
 import { useApp } from '../store/AppContext'
 
 export function Dashboard() {
-  const { profiles, properties, getAllMatches } = useApp()
+  const { profiles, properties, getAllMatches, pendingIntakeCount, storageMode } = useApp()
   const allMatches = getAllMatches()
   const totalMatches = allMatches.reduce((sum, m) => sum + m.matches.length, 0)
   const topMatches = allMatches.flatMap((m) => m.matches.slice(0, 1).map((match) => ({ match, property: m.property }))).slice(0, 3)
@@ -18,6 +19,16 @@ export function Dashboard() {
   return (
     <div className="content-page space-y-6 sm:space-y-8">
       <DashboardHero matchCount={totalMatches} profileCount={profiles.length} />
+
+      {storageMode === 'cloud' && pendingIntakeCount > 0 && (
+        <Link to="/formulaires" className="intake-alert intake-alert--link nemea-panel">
+          <Bell size={20} className="text-amber-300 shrink-0" aria-hidden />
+          <span className="text-sm text-white">
+            <strong>{pendingIntakeCount}</strong> nouvelle{pendingIntakeCount > 1 ? 's' : ''} demande
+            {pendingIntakeCount > 1 ? 's' : ''} client — ouvrir les formulaires
+          </span>
+        </Link>
+      )}
 
       <div className="nemea-stats">
         <StatCard label="Profils" value={profiles.length} icon={Users} tone="indigo" delay={50} />

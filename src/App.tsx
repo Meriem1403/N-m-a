@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './store/AuthContext'
 import { AppProvider, useApp } from './store/AppContext'
 import { Login } from './pages/Login'
 import { ResetPassword } from './pages/ResetPassword'
+import { PublicIntakeForm } from './pages/PublicIntakeForm'
 import { Dashboard } from './pages/Dashboard'
 import { Profiles } from './pages/Profiles'
 import { ProfileDetail } from './pages/ProfileDetail'
@@ -20,18 +21,8 @@ import { PropertyNew } from './pages/PropertyNew'
 import { Matches } from './pages/Matches'
 import { History } from './pages/History'
 import { Import } from './pages/Import'
+import { IntakeHub } from './pages/IntakeHub'
 import { NotFound } from './pages/NotFound'
-
-function AuthGate() {
-  return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/reinitialiser-mot-de-passe" element={<ResetPassword />} />
-        <Route path="*" element={<Login />} />
-      </Routes>
-    </BrowserRouter>
-  )
-}
 
 function AppRoutes() {
   const { requiresAuth, authReady, session, passwordRecovery } = useAuth()
@@ -39,7 +30,7 @@ function AppRoutes() {
 
   if (requiresAuth && !authReady) {
     return (
-      <div className="app-loading-screen">
+      <div className="app-loading-screen app-loading-screen--scroll">
         <div className="nemea-panel app-loading-panel">
           <p className="text-sm font-medium text-white">Néméa</p>
           <p className="text-xs text-nemea-subtle mt-2">Vérification de la session…</p>
@@ -53,12 +44,12 @@ function AppRoutes() {
   }
 
   if (requiresAuth && !session) {
-    return <AuthGate />
+    return <Login />
   }
 
   if (!ready) {
     return (
-      <div className="app-loading-screen">
+      <div className="app-loading-screen app-loading-screen--scroll">
         <div className="nemea-panel app-loading-panel">
           <p className="text-sm font-medium text-white">Chargement de Néméa…</p>
           <p className="text-xs text-nemea-subtle mt-2">Connexion à la base de données</p>
@@ -77,40 +68,55 @@ function AppRoutes() {
           </button>
         </div>
       )}
-      <BrowserRouter>
-        <Routes>
-          <Route element={<Layout />}>
-            <Route index element={<Dashboard />} />
-            <Route path="profils" element={<Profiles />} />
-            <Route path="profils/nouveau" element={<ProfileNew />} />
-            <Route path="profils/:id/modifier" element={<ProfileEdit />} />
-            <Route path="profils/:id" element={<ProfileDetail />} />
-            <Route path="recherches" element={<Searches />} />
-            <Route path="recherches/nouveau" element={<SearchNew />} />
-            <Route path="recherches/:id/modifier" element={<SearchEdit />} />
-            <Route path="recherches/:id" element={<SearchDetail />} />
-            <Route path="biens" element={<Properties />} />
-            <Route path="biens/nouveau" element={<PropertyNew />} />
-            <Route path="biens/:id/modifier" element={<PropertyEdit />} />
-            <Route path="biens/:id" element={<PropertyDetail />} />
-            <Route path="correspondances" element={<Matches />} />
-            <Route path="matchs" element={<Navigate to="/correspondances" replace />} />
-            <Route path="historique" element={<History />} />
-            <Route path="import" element={<Import />} />
-            <Route path="*" element={<NotFound />} />
-          </Route>
-        </Routes>
-      </BrowserRouter>
+      <Routes>
+        <Route element={<Layout />}>
+          <Route index element={<Dashboard />} />
+          <Route path="profils" element={<Profiles />} />
+          <Route path="profils/nouveau" element={<ProfileNew />} />
+          <Route path="profils/:id/modifier" element={<ProfileEdit />} />
+          <Route path="profils/:id" element={<ProfileDetail />} />
+          <Route path="recherches" element={<Searches />} />
+          <Route path="recherches/nouveau" element={<SearchNew />} />
+          <Route path="recherches/:id/modifier" element={<SearchEdit />} />
+          <Route path="recherches/:id" element={<SearchDetail />} />
+          <Route path="biens" element={<Properties />} />
+          <Route path="biens/nouveau" element={<PropertyNew />} />
+          <Route path="biens/:id/modifier" element={<PropertyEdit />} />
+          <Route path="biens/:id" element={<PropertyDetail />} />
+          <Route path="correspondances" element={<Matches />} />
+          <Route path="matchs" element={<Navigate to="/correspondances" replace />} />
+          <Route path="historique" element={<History />} />
+          <Route path="import" element={<Import />} />
+          <Route path="formulaires" element={<IntakeHub />} />
+          <Route path="*" element={<NotFound />} />
+        </Route>
+      </Routes>
     </>
   )
 }
 
-export default function App() {
+function AuthenticatedShell() {
   return (
     <AuthProvider>
       <AppProvider>
         <AppRoutes />
       </AppProvider>
     </AuthProvider>
+  )
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/f/:token" element={<PublicIntakeForm />} />
+        <Route path="/reinitialiser-mot-de-passe" element={
+          <AuthProvider>
+            <ResetPassword />
+          </AuthProvider>
+        } />
+        <Route path="/*" element={<AuthenticatedShell />} />
+      </Routes>
+    </BrowserRouter>
   )
 }

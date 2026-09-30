@@ -108,7 +108,13 @@ Commit + push → Netlify rebuild. Ouvrir le site : page **Connexion sécurisée
 
 Tous les **comptes connectés** voient les **mêmes** profils, recherches et biens (équipe d’une même agence). Pour isoler les données par utilisateur, il faudrait ajouter une colonne `owner_id` et des policies `auth.uid()` — non inclus dans cette version.
 
-### 5.5 Mot de passe oublié
+### 5.5 Formulaires client (lien public)
+
+1. **SQL Editor** → exécuter `supabase/intake_forms.sql` (tables + RLS + fonction lien public).
+2. Dans l’app : **Formulaires client** → **Générer et copier le lien** → envoyer par SMS / WhatsApp / email.
+3. La cliente ouvre `/f/…` sans compte ; la demande apparaît dans l’app (alerte + badge menu).
+
+### 5.6 Mot de passe oublié
 
 1. Sur la page de connexion : **Mot de passe oublié ?** → email → lien reçu par mail.
 2. Supabase → **Authentication** → **URL Configuration** :

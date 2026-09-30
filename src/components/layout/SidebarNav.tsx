@@ -1,7 +1,8 @@
-import { LayoutDashboard, Users, Search, Building2, Sparkles, History, Import, LogOut } from 'lucide-react'
+import { LayoutDashboard, Users, Search, Building2, Sparkles, History, Import, LogOut, ClipboardList } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
 import { isSupabaseConfigured } from '../../lib/supabase'
 import { useAuth } from '../../store/AuthContext'
+import { useApp } from '../../store/AppContext'
 
 const navItems = [
   { to: '/', icon: LayoutDashboard, label: 'Tableau de bord', end: true },
@@ -11,6 +12,7 @@ const navItems = [
   { to: '/correspondances', icon: Sparkles, label: 'Correspondances' },
   { to: '/historique', icon: History, label: 'Historique' },
   { to: '/import', icon: Import, label: 'Import rapide' },
+  { to: '/formulaires', icon: ClipboardList, label: 'Formulaires client' },
 ]
 
 interface SidebarNavProps {
@@ -20,6 +22,7 @@ interface SidebarNavProps {
 export function SidebarNav({ onNavigate }: SidebarNavProps) {
   const cloud = isSupabaseConfigured()
   const { userEmail, signOut } = useAuth()
+  const { pendingIntakeCount, storageMode } = useApp()
 
   return (
     <aside id="sidebar-nav" className="workspace-sidebar" aria-label="Navigation principale">
@@ -41,6 +44,11 @@ export function SidebarNav({ onNavigate }: SidebarNavProps) {
             >
               <Icon size={18} strokeWidth={1.75} />
               <span className="truncate">{label}</span>
+              {to === '/formulaires' && storageMode === 'cloud' && pendingIntakeCount > 0 && (
+                <span className="sidebar-link__badge" aria-label={`${pendingIntakeCount} en attente`}>
+                  {pendingIntakeCount}
+                </span>
+              )}
             </NavLink>
           ))}
         </div>

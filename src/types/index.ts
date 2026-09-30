@@ -124,6 +124,41 @@ export interface MatchResult {
   details: MatchDetail[]
 }
 
+export type ClientIntakeStatus = 'pending' | 'processed' | 'dismissed'
+
+export interface IntakeToken {
+  id: string
+  label?: string
+  active: boolean
+  expiresAt?: string
+  createdAt: string
+}
+
+export interface ClientIntake {
+  id: string
+  intakeTokenId: string
+  status: ClientIntakeStatus
+  firstName: string
+  lastName: string
+  phone?: string
+  email?: string
+  message?: string
+  criteria: Record<string, unknown>
+  agentNotes?: string
+  processedProfileId?: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface PublicIntakePayload {
+  firstName: string
+  lastName: string
+  phone?: string
+  email?: string
+  message?: string
+  criteria: Record<string, unknown>
+}
+
 export interface ParsedImport {
   firstName?: string
   lastName?: string
