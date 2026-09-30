@@ -1,6 +1,21 @@
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { demoProfiles, demoProperties, demoSearches } from '../data/demo'
 import { matchPropertyToAllSearches, matchPropertyToSearch } from '../lib/matching'
+import { isSupabaseConfigured } from '../lib/supabase'
+import {
+  fetchAllData,
+  seedSupabaseFromDemo,
+  syncInsertExchange,
+  syncInsertProfile,
+  syncInsertProperty,
+  syncInsertSearch,
+  syncPatchProfile,
+  syncPatchProperty,
+  syncPatchSearch,
+  syncRemoveProfile,
+  syncRemoveProperty,
+  syncRemoveSearch,
+} from '../lib/supabaseRepo'
 import type { Exchange, MatchResult, ParsedImport, Profile, Property, Search, SearchCriteria, SearchHistoryEntry } from '../types'
 
 interface AppState {
@@ -9,7 +24,13 @@ interface AppState {
   properties: Property[]
 }
 
+export type StorageMode = 'demo' | 'cloud'
+
 interface AppContextValue extends AppState {
+  ready: boolean
+  storageMode: StorageMode
+  syncError: string | null
+  clearSyncError: () => void
   addProfile: (profile: Omit<Profile, 'id' | 'createdAt' | 'updatedAt'>) => Profile
   updateProfile: (id: string, data: Partial<Omit<Profile, 'id' | 'createdAt'>>) => Profile | undefined
   deleteProfile: (id: string) => void
@@ -35,6 +56,10 @@ const AppContext = createContext<AppContextValue | null>(null)
 
 function generateId(prefix: string) {
   return `${prefix}${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`
+}
+
+function newEntityId(cloud: boolean, prefix: string) {
+  return cloud ? crypto.randomUUID() : generateId(prefix)
 }
 
 const defaultCriteria = (): SearchCriteria => ({
@@ -74,16 +99,61 @@ function diffCriteria(before: SearchCriteria, after: SearchCriteria): Partial<Se
 }
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  const [profiles, setProfiles] = useState<Profile[]>(demoProfiles)
-  const [searches, setSearches] = useState<Search[]>(demoSearches)
-  const [properties, setProperties] = useState<Property[]>(demoProperties)
+  const cloud = isSupabaseConfigured()
+  const [ready, setReady] = useState(!cloud)
+  const [storageMode] = useState<StorageMode>(cloud ? 'cloud' : 'demo')
+  const [syncError, setSyncError] = useState<string | null>(null)
+  const [profiles, setProfiles] = useState<Profile[]>(cloud ? [] : demoProfiles)
+  const [searches, setSearches] = useState<Search[]>(cloud ? [] : demoSearches)
+  const [properties, setProperties] = useState<Property[]>(cloud ? [] : demoProperties)
+
+  const runSync = useCallback((task: () => Promise<void>) => {
+    void task().catch((err: unknown) => {
+      console.error(err)
+      const message = err instanceof Error ? err.message : 'Erreur de synchronisation avec la base'
+      setSyncError(message)
+    })
+  }, [])
+
+  useEffect(() => {
+    if (!cloud) return
+
+    let cancelled = false
+
+    ;(async () => {
+      try {
+        let data = await fetchAllData()
+        if (data.profiles.length === 0 && data.properties.length === 0) {
+          await seedSupabaseFromDemo()
+          data = await fetchAllData()
+        }
+        if (cancelled) return
+        setProfiles(data.profiles)
+        setSearches(data.searches)
+        setProperties(data.properties)
+      } catch (err) {
+        console.error(err)
+        if (!cancelled) {
+          setSyncError(err instanceof Error ? err.message : 'Impossible de charger la base de données')
+        }
+      } finally {
+        if (!cancelled) setReady(true)
+      }
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [cloud])
 
   const addProfile = useCallback((data: Omit<Profile, 'id' | 'createdAt' | 'updatedAt'>) => {
     const now = new Date().toISOString()
-    const profile: Profile = { ...data, id: generateId('p'), createdAt: now, updatedAt: now }
+    const id = newEntityId(cloud, 'p')
+    const profile: Profile = { ...data, id, createdAt: now, updatedAt: now }
     setProfiles((prev) => [...prev, profile])
+    if (cloud) runSync(() => syncInsertProfile(id, data))
     return profile
-  }, [])
+  }, [cloud, runSync])
 
   const updateProfile = useCallback((id: string, data: Partial<Omit<Profile, 'id' | 'createdAt'>>) => {
     let updated: Profile | undefined
@@ -94,45 +164,53 @@ export function AppProvider({ children }: { children: ReactNode }) {
         return updated
       }),
     )
+    if (cloud && updated) runSync(() => syncPatchProfile(id, data))
     return updated
-  }, [])
+  }, [cloud, runSync])
 
   const deleteProfile = useCallback((id: string) => {
     setProfiles((prev) => prev.filter((p) => p.id !== id))
     setSearches((prev) => prev.filter((s) => s.profileId !== id))
-  }, [])
+    if (cloud) runSync(() => syncRemoveProfile(id))
+  }, [cloud, runSync])
 
   const addExchange = useCallback((profileId: string, data: Omit<Exchange, 'id'>) => {
+    const id = newEntityId(cloud, 'e')
     let created: Exchange | undefined
     setProfiles((prev) =>
       prev.map((p) => {
         if (p.id !== profileId) return p
-        created = { ...data, id: generateId('e') }
+        created = { ...data, id }
         return { ...p, exchanges: [created, ...p.exchanges], updatedAt: new Date().toISOString() }
       }),
     )
+    if (cloud) runSync(() => syncInsertExchange(id, profileId, data))
     return created
-  }, [])
+  }, [cloud, runSync])
 
   const addSearch = useCallback((data: Omit<Search, 'id' | 'createdAt' | 'updatedAt' | 'history'>) => {
     const now = new Date().toISOString()
-    const search: Search = { ...data, id: generateId('s'), createdAt: now, updatedAt: now, history: [] }
+    const id = newEntityId(cloud, 's')
+    const search: Search = { ...data, id, createdAt: now, updatedAt: now, history: [] }
     setSearches((prev) => [...prev, search])
+    if (cloud) runSync(() => syncInsertSearch(id, data))
     return search
-  }, [])
+  }, [cloud, runSync])
 
   const updateSearch = useCallback((id: string, data: Partial<Omit<Search, 'id' | 'createdAt'>>, historyNote?: string) => {
     let updated: Search | undefined
+    let historyEntry: SearchHistoryEntry | undefined
+
     setSearches((prev) =>
       prev.map((s) => {
         if (s.id !== id) return s
         const nextCriteria = data.criteria ? { ...s.criteria, ...data.criteria } : s.criteria
         const changes = data.criteria ? diffCriteria(s.criteria, nextCriteria) : {}
         const hasChanges = Object.keys(changes).length > 0
-        const historyEntry: SearchHistoryEntry | null =
+        historyEntry =
           hasChanges || historyNote
-            ? { id: generateId('h'), date: new Date().toISOString().split('T')[0], changes, note: historyNote }
-            : null
+            ? { id: newEntityId(cloud, 'h'), date: new Date().toISOString().split('T')[0], changes, note: historyNote }
+            : undefined
         updated = {
           ...s,
           ...data,
@@ -143,19 +221,26 @@ export function AppProvider({ children }: { children: ReactNode }) {
         return updated
       }),
     )
+
+    if (cloud && updated) {
+      runSync(() => syncPatchSearch(id, { ...data, criteria: updated!.criteria }, historyEntry))
+    }
     return updated
-  }, [])
+  }, [cloud, runSync])
 
   const deleteSearch = useCallback((id: string) => {
     setSearches((prev) => prev.filter((s) => s.id !== id))
-  }, [])
+    if (cloud) runSync(() => syncRemoveSearch(id))
+  }, [cloud, runSync])
 
   const addProperty = useCallback((data: Omit<Property, 'id' | 'createdAt' | 'updatedAt'>) => {
     const now = new Date().toISOString()
-    const property: Property = { ...data, id: generateId('b'), createdAt: now, updatedAt: now }
+    const id = newEntityId(cloud, 'b')
+    const property: Property = { ...data, id, createdAt: now, updatedAt: now }
     setProperties((prev) => [...prev, property])
+    if (cloud) runSync(() => syncInsertProperty(id, data))
     return property
-  }, [])
+  }, [cloud, runSync])
 
   const updateProperty = useCallback((id: string, data: Partial<Omit<Property, 'id' | 'createdAt'>>) => {
     let updated: Property | undefined
@@ -166,12 +251,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
         return updated
       }),
     )
+    if (cloud && updated) runSync(() => syncPatchProperty(id, data))
     return updated
-  }, [])
+  }, [cloud, runSync])
 
   const deleteProperty = useCallback((id: string) => {
     setProperties((prev) => prev.filter((p) => p.id !== id))
-  }, [])
+    if (cloud) runSync(() => syncRemoveProperty(id))
+  }, [cloud, runSync])
 
   const importFromParsed = useCallback((parsed: ParsedImport) => {
     const profile = addProfile({
@@ -183,7 +270,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       source: parsed.source || 'autre',
       notes: parsed.notes,
       exchanges: parsed.rawText
-        ? [{ id: generateId('e'), date: new Date().toISOString().split('T')[0], type: 'note', content: `Import : ${parsed.rawText.slice(0, 200)}` }]
+        ? [{ id: newEntityId(cloud, 'e'), date: new Date().toISOString().split('T')[0], type: 'note', content: `Import : ${parsed.rawText.slice(0, 200)}` }]
         : [],
     })
 
@@ -195,7 +282,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
 
     return { profile, search }
-  }, [addProfile, addSearch])
+  }, [addProfile, addSearch, cloud])
 
   const getProfile = useCallback((id: string) => profiles.find((p) => p.id === id), [profiles])
   const getSearch = useCallback((id: string) => searches.find((s) => s.id === id), [searches])
@@ -247,9 +334,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return entries.sort((a, b) => new Date(b.entry.date).getTime() - new Date(a.entry.date).getTime())
   }, [searches, profiles])
 
+  const clearSyncError = useCallback(() => setSyncError(null), [])
+
   const value = useMemo(
     () => ({
       profiles, searches, properties,
+      ready, storageMode, syncError, clearSyncError,
       addProfile, updateProfile, deleteProfile, addExchange,
       addSearch, updateSearch, deleteSearch,
       addProperty, updateProperty, deleteProperty,
@@ -259,6 +349,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }),
     [
       profiles, searches, properties,
+      ready, storageMode, syncError, clearSyncError,
       addProfile, updateProfile, deleteProfile, addExchange,
       addSearch, updateSearch, deleteSearch,
       addProperty, updateProperty, deleteProperty,

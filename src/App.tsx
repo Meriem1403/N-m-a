@@ -1,6 +1,6 @@
 import { BrowserRouter, Navigate, Routes, Route } from 'react-router-dom'
 import { Layout } from './components/layout/Layout'
-import { AppProvider } from './store/AppContext'
+import { AppProvider, useApp } from './store/AppContext'
 import { Dashboard } from './pages/Dashboard'
 import { Profiles } from './pages/Profiles'
 import { ProfileDetail } from './pages/ProfileDetail'
@@ -19,9 +19,35 @@ import { History } from './pages/History'
 import { Import } from './pages/Import'
 import { NotFound } from './pages/NotFound'
 
-export default function App() {
+function AppRoutes() {
+  const { ready, syncError, clearSyncError, storageMode } = useApp()
+
+  if (!ready) {
+    return (
+      <div className="app-loading-screen">
+        <div className="nemea-panel app-loading-panel">
+          <p className="text-sm font-medium text-white">Chargement de Néméa…</p>
+          <p className="text-xs text-nemea-subtle mt-2">Connexion à la base de données</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <AppProvider>
+    <>
+      {syncError && (
+        <div className="app-sync-banner" role="alert">
+          <p className="text-xs sm:text-sm">{syncError}</p>
+          <button type="button" className="app-sync-banner__dismiss" onClick={clearSyncError}>
+            Fermer
+          </button>
+        </div>
+      )}
+      {storageMode === 'cloud' && (
+        <p className="app-storage-badge" aria-live="polite">
+          Données enregistrées dans le cloud
+        </p>
+      )}
       <BrowserRouter>
         <Routes>
           <Route element={<Layout />}>
@@ -46,6 +72,14 @@ export default function App() {
           </Route>
         </Routes>
       </BrowserRouter>
+    </>
+  )
+}
+
+export default function App() {
+  return (
+    <AppProvider>
+      <AppRoutes />
     </AppProvider>
   )
 }

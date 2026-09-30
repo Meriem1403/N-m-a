@@ -40,12 +40,13 @@ npm run build
 npm run preview
 ```
 
-### Netlify (recommandé pour la démo)
+### Netlify + Supabase (démo en ligne avec vraie base)
 
-1. Pousser le repo sur GitHub
-2. [app.netlify.com](https://app.netlify.com) → **Add new site** → **Import from Git**
-3. Build command : `npm run build` · Publish directory : `dist`
-4. Le fichier `netlify.toml` est déjà configuré (routing SPA + build)
+Guide pas à pas : **[DEPLOY.md](./DEPLOY.md)**
+
+- **Netlify** : hébergement du site (gratuit)
+- **Supabase** : PostgreSQL + API (gratuit)
+- Sans clés Supabase dans Netlify → mode démo mémoire uniquement
 
 ### Démo sur iPhone (gratuit, sans App Store)
 

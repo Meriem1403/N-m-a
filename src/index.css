@@ -3,6 +3,7 @@
 @theme {
   /* Palette ardoise lumineuse — contrastes WCAG AA sur textes secondaires */
   --color-nemea-bg: #42526a;
+  --color-nemea-bg-top: #5a7088;
   --color-nemea-bg-deep: #3a4a60;
   --color-nemea-surface: #4e5f78;
   --color-nemea-panel: #5a6b82;
@@ -92,6 +93,74 @@ body {
   box-shadow: 0 0 0 4px rgba(129, 140, 248, 0.35);
 }
 
+.app-loading-screen {
+  display: grid;
+  place-items: center;
+  min-height: 100dvh;
+  padding: 1.5rem;
+  background: var(--color-nemea-bg);
+}
+
+.app-loading-panel {
+  max-width: 20rem;
+  text-align: center;
+}
+
+.app-sync-banner {
+  position: fixed;
+  top: max(0.75rem, env(safe-area-inset-top));
+  left: 50%;
+  z-index: 150;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  max-width: min(36rem, calc(100vw - 1.5rem));
+  padding: 0.625rem 0.875rem;
+  border-radius: 0.625rem;
+  border: 1px solid rgba(248, 113, 113, 0.35);
+  background: rgba(40, 18, 18, 0.92);
+  color: #fecaca;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+.app-sync-banner__dismiss {
+  flex-shrink: 0;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.375rem;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: transparent;
+  color: inherit;
+  font-size: 0.6875rem;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.app-storage-badge {
+  position: fixed;
+  bottom: max(4.5rem, calc(env(safe-area-inset-bottom) + 3.5rem));
+  right: 0.75rem;
+  z-index: 15;
+  margin: 0;
+  padding: 0.35rem 0.625rem;
+  border-radius: 999px;
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #c4b5fd;
+  border: 1px solid rgba(129, 140, 248, 0.35);
+  background: rgba(12, 18, 32, 0.85);
+  backdrop-filter: blur(12px);
+  pointer-events: none;
+}
+
+@media (min-width: 1024px) {
+  .app-storage-badge {
+    bottom: 1rem;
+  }
+}
+
 .app-root {
   display: grid;
   grid-template-rows: 1fr auto;
@@ -103,7 +172,7 @@ body {
     radial-gradient(ellipse 90% 55% at 50% -8%, rgba(165, 180, 252, 0.34) 0%, transparent 58%),
     radial-gradient(ellipse 55% 45% at 100% 100%, rgba(125, 211, 252, 0.2) 0%, transparent 52%),
     radial-gradient(ellipse 40% 35% at 0% 60%, rgba(196, 181, 253, 0.16) 0%, transparent 50%),
-    linear-gradient(180deg, #5a7088 0%, var(--color-nemea-bg) 46%, var(--color-nemea-bg-deep) 100%);
+    linear-gradient(180deg, var(--color-nemea-bg-top) 0%, var(--color-nemea-bg) 46%, var(--color-nemea-bg-deep) 100%);
 }
 
 @media (min-width: 1024px) {
@@ -217,6 +286,19 @@ a:focus:not(:focus-visible) {
   z-index: 0;
   pointer-events: none;
   contain: layout style paint;
+  background-color: var(--color-nemea-bg);
+}
+
+.cosmic-background-gradient {
+  background:
+    radial-gradient(ellipse 80% 50% at 50% 0%, rgba(165, 180, 252, 0.38) 0%, transparent 55%),
+    radial-gradient(ellipse 50% 40% at 90% 90%, rgba(139, 92, 246, 0.22) 0%, transparent 50%),
+    linear-gradient(
+      180deg,
+      var(--color-nemea-bg-top) 0%,
+      var(--color-nemea-bg) 42%,
+      var(--color-nemea-bg-deep) 100%
+    );
 }
 
 .bg-layer::after {
@@ -225,9 +307,8 @@ a:focus:not(:focus-visible) {
   inset: 0;
   background: linear-gradient(
     180deg,
-    rgba(10, 14, 24, 0.12) 0%,
-    rgba(10, 14, 24, 0.32) 55%,
-    rgba(8, 12, 22, 0.42) 100%
+    rgba(10, 14, 24, 0) 0%,
+    rgba(10, 14, 24, 0.06) 100%
   );
   pointer-events: none;
 }

@@ -42,16 +42,7 @@ export function CosmicBackground() {
   return (
     <div className="absolute inset-0 overflow-hidden" aria-hidden="true">
       <div ref={parallaxRef} className="absolute inset-0 will-change-transform">
-        <div
-          className="absolute inset-0"
-          style={{
-            background: `
-              radial-gradient(ellipse 80% 50% at 50% 0%, rgba(165, 180, 252, 0.32) 0%, transparent 55%),
-              radial-gradient(ellipse 50% 40% at 90% 90%, rgba(139, 92, 246, 0.2) 0%, transparent 50%),
-              linear-gradient(180deg, rgba(90, 112, 136, 0.65) 0%, rgba(66, 82, 106, 0.78) 45%, rgba(58, 74, 96, 0.88) 100%)
-            `,
-          }}
-        />
+        <div className="absolute inset-0 cosmic-background-gradient" />
         {nebulae.map((n, i) => (
           <div
             key={i}

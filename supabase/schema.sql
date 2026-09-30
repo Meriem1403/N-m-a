@@ -82,3 +82,34 @@ create index idx_searches_active on searches(active) where active = true;
 create index idx_properties_status on properties(status);
 create index idx_exchanges_profile on exchanges(profile_id);
 create index idx_search_history_search on search_history(search_id);
+
+-- Mise à jour automatique de updated_at
+create or replace function set_updated_at()
+returns trigger as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$ language plpgsql;
+
+create trigger profiles_updated_at before update on profiles
+for each row execute function set_updated_at();
+
+create trigger searches_updated_at before update on searches
+for each row execute function set_updated_at();
+
+create trigger properties_updated_at before update on properties
+for each row execute function set_updated_at();
+
+-- RLS (démo sans authentification — à sécuriser avec Supabase Auth avant usage public)
+alter table profiles enable row level security;
+alter table exchanges enable row level security;
+alter table searches enable row level security;
+alter table search_history enable row level security;
+alter table properties enable row level security;
+
+create policy "demo_profiles_all" on profiles for all using (true) with check (true);
+create policy "demo_exchanges_all" on exchanges for all using (true) with check (true);
+create policy "demo_searches_all" on searches for all using (true) with check (true);
+create policy "demo_search_history_all" on search_history for all using (true) with check (true);
+create policy "demo_properties_all" on properties for all using (true) with check (true);
