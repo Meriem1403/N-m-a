@@ -106,6 +106,40 @@ body {
   text-align: center;
 }
 
+.app-login-panel {
+  width: min(100%, 22rem);
+}
+
+.sidebar-auth {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.sidebar-auth__email {
+  font-size: 0.6875rem;
+  color: var(--color-nemea-subtle, rgba(255, 255, 255, 0.55));
+}
+
+.sidebar-auth__logout {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.5rem;
+  border-radius: 0.375rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: transparent;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.sidebar-auth__logout:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
 .app-sync-banner {
   position: fixed;
   top: max(0.75rem, env(safe-area-inset-top));

@@ -38,7 +38,7 @@ export function SearchEdit() {
       criteria: {
         ...criteria,
         budgetMax: parseBudgetInput(budgetMaxStr),
-        surfaceMin: parseBudgetInput(surfaceMinStr),
+        surfaceMin: surfaceMinStr.trim() ? parseInt(surfaceMinStr.replace(/\s/g, ''), 10) || undefined : undefined,
       },
     }, historyNote.trim() || undefined)
     navigate(`/recherches/${search.id}`)

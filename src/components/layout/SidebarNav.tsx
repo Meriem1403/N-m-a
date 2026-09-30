@@ -1,5 +1,7 @@
-import { LayoutDashboard, Users, Search, Building2, Sparkles, History, Import } from 'lucide-react'
+import { LayoutDashboard, Users, Search, Building2, Sparkles, History, Import, LogOut } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
+import { isSupabaseConfigured } from '../../lib/supabase'
+import { useAuth } from '../../store/AuthContext'
 
 const navItems = [
   { to: '/', icon: LayoutDashboard, label: 'Tableau de bord', end: true },
@@ -16,6 +18,9 @@ interface SidebarNavProps {
 }
 
 export function SidebarNav({ onNavigate }: SidebarNavProps) {
+  const cloud = isSupabaseConfigured()
+  const { userEmail, signOut } = useAuth()
+
   return (
     <aside id="sidebar-nav" className="workspace-sidebar" aria-label="Navigation principale">
       <div className="workspace-sidebar-brand">
@@ -41,7 +46,26 @@ export function SidebarNav({ onNavigate }: SidebarNavProps) {
         </div>
       </nav>
 
-      <div className="sidebar-engine mt-auto">
+      {cloud && userEmail && (
+        <div className="sidebar-auth mt-auto">
+          <p className="sidebar-auth__email truncate" title={userEmail}>
+            {userEmail}
+          </p>
+          <button
+            type="button"
+            className="sidebar-auth__logout"
+            onClick={() => {
+              void signOut()
+              onNavigate?.()
+            }}
+          >
+            <LogOut size={16} aria-hidden />
+            Déconnexion
+          </button>
+        </div>
+      )}
+
+      <div className={`sidebar-engine ${cloud && userEmail ? '' : 'mt-auto'}`}>
         <p>Moteur actif</p>
         <p>Correspondances calculées en temps réel sur vos biens et recherches.</p>
       </div>

@@ -101,15 +101,20 @@ for each row execute function set_updated_at();
 create trigger properties_updated_at before update on properties
 for each row execute function set_updated_at();
 
--- RLS (démo sans authentification — à sécuriser avec Supabase Auth avant usage public)
+-- RLS : accès réservé aux utilisateurs Supabase Auth (voir supabase/secure_rls.sql pour migration)
 alter table profiles enable row level security;
 alter table exchanges enable row level security;
 alter table searches enable row level security;
 alter table search_history enable row level security;
 alter table properties enable row level security;
 
-create policy "demo_profiles_all" on profiles for all using (true) with check (true);
-create policy "demo_exchanges_all" on exchanges for all using (true) with check (true);
-create policy "demo_searches_all" on searches for all using (true) with check (true);
-create policy "demo_search_history_all" on search_history for all using (true) with check (true);
-create policy "demo_properties_all" on properties for all using (true) with check (true);
+create policy "profiles_authenticated" on profiles
+  for all to authenticated using (true) with check (true);
+create policy "exchanges_authenticated" on exchanges
+  for all to authenticated using (true) with check (true);
+create policy "searches_authenticated" on searches
+  for all to authenticated using (true) with check (true);
+create policy "search_history_authenticated" on search_history
+  for all to authenticated using (true) with check (true);
+create policy "properties_authenticated" on properties
+  for all to authenticated using (true) with check (true);

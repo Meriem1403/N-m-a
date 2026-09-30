@@ -31,7 +31,9 @@ Au premier lancement en ligne, si la base est vide, l’app **importe automatiqu
 1. **Project Settings** → **API**
 2. Noter :
    - **Project URL** → `VITE_SUPABASE_URL`
-   - **anon public** → `VITE_SUPABASE_ANON_KEY`
+   - **Clé client** → `VITE_SUPABASE_ANON_KEY`  
+     Recommandé : onglet **Legacy anon, service_role API keys** → copier la clé **anon** (`eyJ…`).  
+     La clé **Publishable** (`sb_publishable_…`) fonctionne parfois, mais en cas d’erreur de synchro, utiliser **Legacy anon**.
 
 > Ne jamais committer la clé `service_role` dans le front.
 
@@ -80,13 +82,31 @@ Après un déploiement, si l’ancienne version s’affiche :
 
 ---
 
-## 5. Sécurité (important)
+## 5. Sécurité (obligatoire en production)
 
-Le schéma inclut des politiques RLS **ouvertes** pour la démo (sans login).  
-Avant un usage réel ou public :
+L’application affiche un **écran de connexion** dès que Supabase est configuré. Sans login, personne ne peut lire ni modifier les données (RLS).
 
-- Activer **Supabase Auth** (email, magic link, etc.)
-- Remplacer les policies `demo_*_all` par des règles liées à `auth.uid()`
+### 5.1 Activer l’email / mot de passe
+
+1. Supabase → **Authentication** → **Providers** → **Email** → activé.
+2. Pour une agence fermée : **Authentication** → **Providers** → désactiver **Sign ups** (inscriptions publiques).
+3. **Authentication** → **Users** → **Add user** → email + mot de passe pour chaque collaborateur.
+
+### 5.2 Appliquer les policies RLS sécurisées
+
+Si la base a encore été créée avec les anciennes policies `demo_*_all` :
+
+1. **SQL Editor** → coller le fichier `supabase/secure_rls.sql` → **Run**.
+
+Les visiteurs anonymes (clé anon sans session) n’ont plus accès aux tables.
+
+### 5.3 Déployer le front
+
+Commit + push → Netlify rebuild. Ouvrir le site : page **Connexion sécurisée**, puis accès à l’app avec le compte créé à l’étape 5.1.
+
+### 5.4 Modèle d’accès
+
+Tous les **comptes connectés** voient les **mêmes** profils, recherches et biens (équipe d’une même agence). Pour isoler les données par utilisateur, il faudrait ajouter une colonne `owner_id` et des policies `auth.uid()` — non inclus dans cette version.
 
 ---
 

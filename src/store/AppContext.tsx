@@ -1,7 +1,9 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { demoProfiles, demoProperties, demoSearches } from '../data/demo'
 import { matchPropertyToAllSearches, matchPropertyToSearch } from '../lib/matching'
+import { formatSupabaseError } from '../lib/supabaseErrors'
 import { isSupabaseConfigured } from '../lib/supabase'
+import { useAuth } from './AuthContext'
 import {
   fetchAllData,
   seedSupabaseFromDemo,
@@ -100,6 +102,7 @@ function diffCriteria(before: SearchCriteria, after: SearchCriteria): Partial<Se
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const cloud = isSupabaseConfigured()
+  const { session } = useAuth()
   const [ready, setReady] = useState(!cloud)
   const [storageMode] = useState<StorageMode>(cloud ? 'cloud' : 'demo')
   const [syncError, setSyncError] = useState<string | null>(null)
@@ -110,15 +113,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const runSync = useCallback((task: () => Promise<void>) => {
     void task().catch((err: unknown) => {
       console.error(err)
-      const message = err instanceof Error ? err.message : 'Erreur de synchronisation avec la base'
-      setSyncError(message)
+      setSyncError(formatSupabaseError(err))
     })
   }, [])
 
   useEffect(() => {
     if (!cloud) return
 
+    if (!session) {
+      setProfiles([])
+      setSearches([])
+      setProperties([])
+      setReady(true)
+      return
+    }
+
     let cancelled = false
+    setReady(false)
 
     ;(async () => {
       try {
@@ -134,7 +145,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       } catch (err) {
         console.error(err)
         if (!cancelled) {
-          setSyncError(err instanceof Error ? err.message : 'Impossible de charger la base de données')
+          setSyncError(formatSupabaseError(err))
         }
       } finally {
         if (!cancelled) setReady(true)
@@ -144,7 +155,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true
     }
-  }, [cloud])
+  }, [cloud, session?.user.id])
 
   const addProfile = useCallback((data: Omit<Profile, 'id' | 'createdAt' | 'updatedAt'>) => {
     const now = new Date().toISOString()
@@ -223,7 +234,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     )
 
     if (cloud && updated) {
-      runSync(() => syncPatchSearch(id, { ...data, criteria: updated!.criteria }, historyEntry))
+      runSync(() => syncPatchSearch(id, data, historyEntry))
     }
     return updated
   }, [cloud, runSync])

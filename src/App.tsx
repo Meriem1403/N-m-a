@@ -1,6 +1,8 @@
 import { BrowserRouter, Navigate, Routes, Route } from 'react-router-dom'
 import { Layout } from './components/layout/Layout'
+import { AuthProvider, useAuth } from './store/AuthContext'
 import { AppProvider, useApp } from './store/AppContext'
+import { Login } from './pages/Login'
 import { Dashboard } from './pages/Dashboard'
 import { Profiles } from './pages/Profiles'
 import { ProfileDetail } from './pages/ProfileDetail'
@@ -20,7 +22,23 @@ import { Import } from './pages/Import'
 import { NotFound } from './pages/NotFound'
 
 function AppRoutes() {
+  const { requiresAuth, authReady, session } = useAuth()
   const { ready, syncError, clearSyncError, storageMode } = useApp()
+
+  if (requiresAuth && !authReady) {
+    return (
+      <div className="app-loading-screen">
+        <div className="nemea-panel app-loading-panel">
+          <p className="text-sm font-medium text-white">Néméa</p>
+          <p className="text-xs text-nemea-subtle mt-2">Vérification de la session…</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (requiresAuth && !session) {
+    return <Login />
+  }
 
   if (!ready) {
     return (
@@ -78,8 +96,10 @@ function AppRoutes() {
 
 export default function App() {
   return (
-    <AppProvider>
-      <AppRoutes />
-    </AppProvider>
+    <AuthProvider>
+      <AppProvider>
+        <AppRoutes />
+      </AppProvider>
+    </AuthProvider>
   )
 }

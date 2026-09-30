@@ -1,4 +1,11 @@
+import { stripUndefined } from './jsonSanitize'
 import type { Exchange, Profile, Property, Search, SearchCriteria, SearchHistoryEntry } from '../types'
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+
+export function ensureUuid(id: string): string {
+  return UUID_RE.test(id) ? id : crypto.randomUUID()
+}
 
 export interface ProfileRow {
   id: string
@@ -157,7 +164,7 @@ export function profileToInsert(data: Omit<Profile, 'id' | 'createdAt' | 'update
 }
 
 export function profileToUpdate(data: Partial<Omit<Profile, 'id' | 'createdAt' | 'exchanges'>>) {
-  const row: Record<string, unknown> = { updated_at: new Date().toISOString() }
+  const row: Record<string, unknown> = {}
   if (data.firstName !== undefined) row.first_name = data.firstName
   if (data.lastName !== undefined) row.last_name = data.lastName
   if (data.phone !== undefined) row.phone = data.phone ?? null
@@ -182,16 +189,16 @@ export function searchToInsert(data: Omit<Search, 'id' | 'createdAt' | 'updatedA
     profile_id: data.profileId,
     label: data.label,
     active: data.active,
-    criteria: data.criteria,
+    criteria: stripUndefined(data.criteria),
   }
 }
 
 export function searchToUpdate(data: Partial<Omit<Search, 'id' | 'createdAt' | 'history'>>) {
-  const row: Record<string, unknown> = { updated_at: new Date().toISOString() }
+  const row: Record<string, unknown> = {}
   if (data.profileId !== undefined) row.profile_id = data.profileId
   if (data.label !== undefined) row.label = data.label
   if (data.active !== undefined) row.active = data.active
-  if (data.criteria !== undefined) row.criteria = data.criteria
+  if (data.criteria !== undefined) row.criteria = stripUndefined(data.criteria)
   return row
 }
 
@@ -199,7 +206,7 @@ export function historyToInsert(searchId: string, entry: Omit<SearchHistoryEntry
   return {
     search_id: searchId,
     date: entry.date,
-    changes: entry.changes,
+    changes: stripUndefined(entry.changes ?? {}),
     note: entry.note ?? null,
   }
 }
@@ -231,7 +238,7 @@ export function propertyToInsert(data: Omit<Property, 'id' | 'createdAt' | 'upda
 }
 
 export function propertyToUpdate(data: Partial<Omit<Property, 'id' | 'createdAt'>>) {
-  const row: Record<string, unknown> = { updated_at: new Date().toISOString() }
+  const row: Record<string, unknown> = {}
   if (data.reference !== undefined) row.reference = data.reference
   if (data.price !== undefined) row.price = data.price
   if (data.city !== undefined) row.city = data.city
