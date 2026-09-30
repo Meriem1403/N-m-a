@@ -3,6 +3,7 @@ import { Layout } from './components/layout/Layout'
 import { AuthProvider, useAuth } from './store/AuthContext'
 import { AppProvider, useApp } from './store/AppContext'
 import { Login } from './pages/Login'
+import { ResetPassword } from './pages/ResetPassword'
 import { Dashboard } from './pages/Dashboard'
 import { Profiles } from './pages/Profiles'
 import { ProfileDetail } from './pages/ProfileDetail'
@@ -21,9 +22,20 @@ import { History } from './pages/History'
 import { Import } from './pages/Import'
 import { NotFound } from './pages/NotFound'
 
+function AuthGate() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/reinitialiser-mot-de-passe" element={<ResetPassword />} />
+        <Route path="*" element={<Login />} />
+      </Routes>
+    </BrowserRouter>
+  )
+}
+
 function AppRoutes() {
-  const { requiresAuth, authReady, session } = useAuth()
-  const { ready, syncError, clearSyncError, storageMode } = useApp()
+  const { requiresAuth, authReady, session, passwordRecovery } = useAuth()
+  const { ready, syncError, clearSyncError } = useApp()
 
   if (requiresAuth && !authReady) {
     return (
@@ -36,8 +48,12 @@ function AppRoutes() {
     )
   }
 
+  if (requiresAuth && passwordRecovery) {
+    return <ResetPassword />
+  }
+
   if (requiresAuth && !session) {
-    return <Login />
+    return <AuthGate />
   }
 
   if (!ready) {
@@ -60,11 +76,6 @@ function AppRoutes() {
             Fermer
           </button>
         </div>
-      )}
-      {storageMode === 'cloud' && (
-        <p className="app-storage-badge" aria-live="polite">
-          Données enregistrées dans le cloud
-        </p>
       )}
       <BrowserRouter>
         <Routes>

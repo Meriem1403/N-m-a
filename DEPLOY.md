@@ -108,6 +108,14 @@ Commit + push → Netlify rebuild. Ouvrir le site : page **Connexion sécurisée
 
 Tous les **comptes connectés** voient les **mêmes** profils, recherches et biens (équipe d’une même agence). Pour isoler les données par utilisateur, il faudrait ajouter une colonne `owner_id` et des policies `auth.uid()` — non inclus dans cette version.
 
+### 5.5 Mot de passe oublié
+
+1. Sur la page de connexion : **Mot de passe oublié ?** → email → lien reçu par mail.
+2. Supabase → **Authentication** → **URL Configuration** :
+   - **Site URL** : l’URL Netlify de l’app (ex. `https://votre-site.netlify.app`)
+   - **Redirect URLs** : ajouter `https://votre-site.netlify.app/reinitialiser-mot-de-passe` (et la même URL en `http://localhost:5173/...` pour le dev).
+3. Sans accès au mail : **Authentication** → **Users** → ton utilisateur → **Send password recovery** ou définir un **nouveau mot de passe** manuellement (admin Supabase).
+
 ---
 
 ## Dépannage

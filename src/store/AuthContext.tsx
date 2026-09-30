@@ -8,8 +8,12 @@ interface AuthContextValue {
   authReady: boolean
   session: Session | null
   userEmail: string | null
+  passwordRecovery: boolean
   signIn: (email: string, password: string) => Promise<void>
   signOut: () => Promise<void>
+  requestPasswordReset: (email: string) => Promise<void>
+  updatePassword: (password: string) => Promise<void>
+  clearPasswordRecovery: () => void
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
@@ -18,6 +22,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const requiresAuth = isSupabaseConfigured()
   const [session, setSession] = useState<Session | null>(null)
   const [authReady, setAuthReady] = useState(!requiresAuth)
+  const [passwordRecovery, setPasswordRecovery] = useState(false)
 
   useEffect(() => {
     if (!supabase) return
@@ -30,7 +35,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setAuthReady(true)
     })
 
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+    const { data: sub } = supabase.auth.onAuthStateChange((event, nextSession) => {
+      if (event === 'PASSWORD_RECOVERY') setPasswordRecovery(true)
       setSession(nextSession)
       setAuthReady(true)
     })
@@ -53,7 +59,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = useCallback(async () => {
     if (!supabase) return
     await supabase.auth.signOut()
+    setPasswordRecovery(false)
   }, [])
+
+  const requestPasswordReset = useCallback(async (email: string) => {
+    if (!supabase) throw new Error('Supabase non configuré')
+    const redirectTo = `${window.location.origin}/reinitialiser-mot-de-passe`
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo })
+    if (error) throw error
+  }, [])
+
+  const updatePassword = useCallback(async (password: string) => {
+    if (!supabase) throw new Error('Supabase non configuré')
+    const { error } = await supabase.auth.updateUser({ password })
+    if (error) throw error
+  }, [])
+
+  const clearPasswordRecovery = useCallback(() => setPasswordRecovery(false), [])
 
   const value = useMemo(
     () => ({
@@ -61,10 +83,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       authReady,
       session,
       userEmail: session?.user.email ?? null,
+      passwordRecovery,
       signIn,
       signOut,
+      requestPasswordReset,
+      updatePassword,
+      clearPasswordRecovery,
     }),
-    [requiresAuth, authReady, session, signIn, signOut],
+    [
+      requiresAuth,
+      authReady,
+      session,
+      passwordRecovery,
+      signIn,
+      signOut,
+      requestPasswordReset,
+      updatePassword,
+      clearPasswordRecovery,
+    ],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

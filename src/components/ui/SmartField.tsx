@@ -1,6 +1,6 @@
 import { useId, useState } from 'react'
 import {
-  Check, AlertCircle, Sparkles, Mail, Phone, Calendar, User, Hash, MapPin, FileText,
+  Check, AlertCircle, Sparkles, Mail, Phone, Calendar, User, Hash, MapPin, FileText, Lock,
 } from 'lucide-react'
 import { cn } from '../../lib/utils'
 import {
@@ -17,7 +17,7 @@ interface SmartFieldProps {
   placeholder?: string
   smartFormat?: boolean
   required?: boolean
-  type?: 'text' | 'email' | 'tel' | 'date' | 'number'
+  type?: 'text' | 'email' | 'tel' | 'date' | 'number' | 'password'
   suffix?: string
   inputMode?: 'text' | 'numeric' | 'tel' | 'email' | 'decimal'
   className?: string
@@ -52,17 +52,19 @@ export function SmartField({
   const id = useId()
   const [focused, setFocused] = useState(false)
   const [shake, setShake] = useState(false)
-  const detectedType = type ?? detectInputType(value, label)
+  const isPassword = type === 'password'
+  const detectedType = isPassword ? 'text' : (type ?? detectInputType(value, label))
   const confLevel = getConfidenceLevel(confidence)
-  const validation = detectedType === 'email' && value ? isValidEmail(value)
+  const validation = isPassword ? true
+    : detectedType === 'email' && value ? isValidEmail(value)
     : detectedType === 'tel' && value ? isValidPhone(value) : true
-  const isComplete = value.length > 0 && validation
-  const Icon = pickIcon(label, detectedType)
+  const isComplete = isPassword ? value.length >= 6 : value.length > 0 && validation
+  const Icon = isPassword ? Lock : pickIcon(label, detectedType)
   const smartLabel = smartFormat && value.length > 2 ? SMART_LABELS[detectedType] : null
   const showHintBelow = hint && (value.length > 0 || focused)
 
   const handleChange = (raw: string) => {
-    if (!smartFormat) { onChange(raw); return }
+    if (isPassword || !smartFormat) { onChange(raw); return }
     if (detectedType === 'tel') onChange(formatPhoneInput(raw))
     else if (label.toLowerCase().includes('surface')) onChange(formatSurfaceInput(raw))
     else onChange(raw)
@@ -95,8 +97,9 @@ export function SmartField({
 
         <input
           id={id}
-          type={detectedType === 'number' ? 'text' : detectedType}
-          inputMode={inputMode ?? (detectedType === 'tel' ? 'tel' : detectedType === 'email' ? 'email' : detectedType === 'number' ? 'numeric' : 'text')}
+          type={isPassword ? 'password' : detectedType === 'number' ? 'text' : type ?? detectedType}
+          inputMode={isPassword ? undefined : inputMode ?? (detectedType === 'tel' ? 'tel' : detectedType === 'email' ? 'email' : detectedType === 'number' ? 'numeric' : 'text')}
+          autoComplete={isPassword ? 'current-password' : undefined}
           value={value}
           onChange={(e) => handleChange(e.target.value)}
           onFocus={() => setFocused(true)}

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Lock, LogIn } from 'lucide-react'
+import { LogIn, Shield } from 'lucide-react'
 import { AmbientLayer } from '../components/layout/AmbientLayer'
 import { SmartField } from '../components/ui/SmartField'
 import { useAuth } from '../store/AuthContext'
@@ -19,18 +19,27 @@ function formatAuthError(err: unknown): string {
 }
 
 export function Login() {
-  const { signIn } = useAuth()
+  const { signIn, requestPasswordReset } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const [info, setInfo] = useState<string | null>(null)
+  const [forgotMode, setForgotMode] = useState(false)
   const [submitting, setSubmitting] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
+    setInfo(null)
     setSubmitting(true)
     try {
-      await signIn(email, password)
+      if (forgotMode) {
+        await requestPasswordReset(email)
+        setInfo('Si un compte existe pour cet email, un lien de réinitialisation vient d’être envoyé.')
+        setForgotMode(false)
+      } else {
+        await signIn(email, password)
+      }
     } catch (err) {
       setError(formatAuthError(err))
     } finally {
@@ -39,19 +48,26 @@ export function Login() {
   }
 
   return (
-    <div className="app-root">
+    <div className="app-root app-login-root">
       <div className="bg-layer">
         <AmbientLayer />
       </div>
-      <div className="app-loading-screen foreground-layer">
-        <div className="nemea-panel app-login-panel">
-          <p className="workspace-sidebar-mark glow-text text-center">NÉMÉA</p>
-          <h1 className="nemea-panel-title text-center mt-3">Connexion sécurisée</h1>
-          <p className="text-xs text-nemea-subtle text-center mt-2 mb-6">
-            Accès réservé à votre équipe. Les données ne sont plus accessibles sans identifiants.
-          </p>
 
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      <div className="app-login-screen foreground-layer">
+        <div className="app-login-card nemea-panel nemea-panel--glow">
+          <div className="app-login-card__header">
+            <div className="app-login-card__badge">
+              <Shield size={14} aria-hidden />
+              Espace sécurisé
+            </div>
+            <p className="workspace-sidebar-mark glow-text">NÉMÉA</p>
+            <h1 className="app-login-card__title">Connexion</h1>
+            <p className="app-login-card__subtitle">
+              Accès réservé à votre équipe. Vos profils, recherches et biens sont synchronisés dans le cloud.
+            </p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="app-login-form">
             <SmartField
               label="Email"
               type="email"
@@ -60,31 +76,70 @@ export function Login() {
               required
               placeholder="vous@agence.fr"
             />
-            <label className="smart-field">
-              <span className="smart-field__label">Mot de passe</span>
-              <div className="smart-field__control">
-                <Lock size={16} className="smart-field__icon" aria-hidden />
-                <input
-                  className="smart-field__input"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  autoComplete="current-password"
-                  placeholder="••••••••"
-                />
-              </div>
-            </label>
+            {!forgotMode && (
+              <SmartField
+                label="Mot de passe"
+                type="password"
+                value={password}
+                onChange={setPassword}
+                smartFormat={false}
+                required
+                placeholder="Votre mot de passe"
+              />
+            )}
+
+            {!forgotMode && (
+              <button
+                type="button"
+                className="app-login-forgot"
+                onClick={() => {
+                  setForgotMode(true)
+                  setError(null)
+                  setInfo(null)
+                }}
+              >
+                Mot de passe oublié ?
+              </button>
+            )}
+
+            {forgotMode && (
+              <button
+                type="button"
+                className="app-login-forgot"
+                onClick={() => {
+                  setForgotMode(false)
+                  setError(null)
+                }}
+              >
+                ← Retour à la connexion
+              </button>
+            )}
+
+            {info && (
+              <p className="app-login-form__info" role="status">
+                {info}
+              </p>
+            )}
 
             {error && (
-              <p className="text-xs text-red-300" role="alert">
+              <p className="app-login-form__error" role="alert">
                 {error}
               </p>
             )}
 
-            <button type="submit" className="btn-primary w-full !rounded-xl mt-2 inline-flex items-center justify-center gap-2" disabled={submitting}>
+            <button
+              type="submit"
+              className="btn-primary w-full !rounded-xl mt-1 inline-flex items-center justify-center gap-2"
+              disabled={submitting}
+            >
               <LogIn size={18} aria-hidden />
-              {submitting ? 'Connexion…' : 'Se connecter'}
+              {submitting
+                ? forgotMode
+                  ? 'Envoi…'
+                  : 'Connexion…'
+                : forgotMode
+                  ? 'Envoyer le lien'
+                  : 'Se connecter'}
             </button>
           </form>
         </div>
