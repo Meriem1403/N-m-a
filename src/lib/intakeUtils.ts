@@ -1,3 +1,4 @@
+import { flattenDistrictLabels } from '../data/pacaLocations'
 import type { ClientIntake, ParsedImport, PropertyType, SearchCriteria } from '../types'
 
 const PROPERTY_TYPES: PropertyType[] = ['studio', 'T1', 'T2', 'T3', 'T4', 'T5+', 'maison', 'loft', 'autre']
@@ -20,11 +21,15 @@ function defaultCriteria(): SearchCriteria {
 }
 
 export function criteriaFromIntakeRecord(raw: Record<string, unknown>): Partial<SearchCriteria> {
-  const cities = typeof raw.cities === 'string'
-    ? raw.cities.split(/[,;]/).map((s) => s.trim()).filter(Boolean)
-    : Array.isArray(raw.cities)
-      ? (raw.cities as string[])
+  const cities = Array.isArray(raw.cities)
+    ? (raw.cities as string[]).filter(Boolean)
+    : typeof raw.cities === 'string'
+      ? raw.cities.split(/[,;]/).map((s) => s.trim()).filter(Boolean)
       : []
+
+  const districts = Array.isArray(raw.districts)
+    ? (raw.districts as string[])
+    : []
 
   const propertyTypes = Array.isArray(raw.propertyTypes)
     ? (raw.propertyTypes as string[]).filter((t): t is PropertyType => PROPERTY_TYPES.includes(t as PropertyType))
@@ -35,6 +40,7 @@ export function criteriaFromIntakeRecord(raw: Record<string, unknown>): Partial<
 
   return {
     ...(cities.length ? { cities } : {}),
+    ...(districts.length ? { districts: flattenDistrictLabels(districts) } : {}),
     ...(propertyTypes.length ? { propertyTypes } : {}),
     ...(budgetMax ? { budgetMax } : {}),
     ...(surfaceMin ? { surfaceMin } : {}),

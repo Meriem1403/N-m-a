@@ -54,7 +54,7 @@ export function Login() {
       </div>
 
       <div className="app-login-screen foreground-layer">
-        <div className="app-login-card nemea-panel nemea-panel--glow">
+        <div className="app-login-card app-form-shell nemea-panel nemea-panel--glow">
           <div className="app-login-card__header">
             <div className="app-login-card__badge">
               <Shield size={14} aria-hidden />

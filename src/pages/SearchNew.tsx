@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { ArrowLeft, User, Search } from 'lucide-react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { User, Search } from 'lucide-react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+import { PageBackLink } from '../components/ui/PageBackLink'
 import { SearchCriteriaForm } from '../components/forms/SearchCriteriaForm'
 import { FormHero } from '../components/ui/FormHero'
 import { FormSection } from '../components/ui/FormSection'
@@ -60,7 +61,7 @@ export function SearchNew() {
 
   return (
     <div className="space-y-5 nemea-page nemea-page--narrow">
-      <Link to="/recherches" className="btn-ghost !px-0 !border-0 !bg-transparent"><ArrowLeft size={16} /> Recherches</Link>
+      <PageBackLink to="/recherches" label="Recherches" />
 
       <FormHero
         variant="search"

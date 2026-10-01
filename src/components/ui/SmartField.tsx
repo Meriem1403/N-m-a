@@ -1,6 +1,7 @@
 import { useId, useState } from 'react'
 import {
-  Check, AlertCircle, Sparkles, Mail, Phone, Calendar, User, Hash, MapPin, FileText, Lock,
+  Check, AlertCircle, Sparkles, Mail, Phone, Calendar, User, MapPin, FileText, Lock,
+  Maximize, LayoutGrid, Tag,
 } from 'lucide-react'
 import { cn } from '../../lib/utils'
 import {
@@ -27,7 +28,7 @@ const TYPE_ICONS = {
   email: Mail,
   tel: Phone,
   date: Calendar,
-  number: Hash,
+  number: FileText,
   text: FileText,
 }
 
@@ -40,7 +41,10 @@ const SMART_LABELS: Partial<Record<string, string>> = {
 
 function pickIcon(label: string, detectedType: keyof typeof TYPE_ICONS) {
   const l = label.toLowerCase()
-  if (l.includes('prénom') || l.includes('nom') || l.includes('name')) return User
+  if (l.includes('prénom') || l.includes('nom')) return User
+  if (l.includes('référence') || l.includes('reference') || l.includes('libellé')) return Tag
+  if (l.includes('surface') || l.includes('m²')) return Maximize
+  if (l.includes('pièce')) return LayoutGrid
   if (l.includes('ville') || l.includes('quartier') || l.includes('local')) return MapPin
   return TYPE_ICONS[detectedType] ?? FileText
 }

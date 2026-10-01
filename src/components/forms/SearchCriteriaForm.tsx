@@ -3,7 +3,7 @@ import { SmartChips } from '../ui/SmartChips'
 import { SmartCriterion } from '../ui/SmartCriterion'
 import { SmartCurrency } from '../ui/SmartCurrency'
 import { SmartField } from '../ui/SmartField'
-import { SmartTags } from '../ui/SmartTags'
+import { PacaLocationPicker } from './PacaLocationPicker'
 import { PROPERTY_TYPE_OPTIONS } from '../../lib/smart'
 import { parseBudgetInput } from '../../lib/smart'
 
@@ -44,22 +44,14 @@ export function SearchCriteriaForm({
         onChange={(types) => onChange({ ...criteria, propertyTypes: types })}
       />
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <SmartField
-          label="Ville"
-          value={criteria.cities[0] ?? ''}
-          onChange={(v) => onChange({ ...criteria, cities: v ? [v] : [] })}
-          smartFormat={false}
-        />
-        <SmartCurrency label="Budget max" value={budgetMaxStr} onChange={onBudgetMaxStrChange} />
-      </div>
-
-      <SmartTags
-        label="Quartiers / arrondissements"
-        tags={criteria.districts}
-        onChange={(districts) => onChange({ ...criteria, districts })}
-        placeholder="Ex: 8e, Bonneveine…"
+      <PacaLocationPicker
+        cities={criteria.cities}
+        districts={criteria.districts}
+        onCitiesChange={(cities) => onChange({ ...criteria, cities })}
+        onDistrictsChange={(districts) => onChange({ ...criteria, districts })}
       />
+
+      <SmartCurrency label="Budget max" value={budgetMaxStr} onChange={onBudgetMaxStrChange} />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <SmartField

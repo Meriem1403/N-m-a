@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { ArrowLeft, User, Contact, Search } from 'lucide-react'
-import { Link, useNavigate } from 'react-router-dom'
+import { User, Contact, Search } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { PageBackLink } from '../components/ui/PageBackLink'
 import { SearchCriteriaForm } from '../components/forms/SearchCriteriaForm'
 import type { ContactSource, SearchCriteria } from '../types'
 import { FormHero } from '../components/ui/FormHero'
@@ -72,7 +73,7 @@ export function ProfileNew() {
 
   return (
     <div className="space-y-5 nemea-page nemea-page--narrow">
-      <Link to="/profils" className="btn-ghost !px-0 !border-0 !bg-transparent"><ArrowLeft size={16} /> Profils</Link>
+      <PageBackLink to="/profils" label="Profils" />
 
       <FormHero
         variant="profile"

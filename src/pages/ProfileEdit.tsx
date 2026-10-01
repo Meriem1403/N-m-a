@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { ArrowLeft, Plus } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
+import { PageBackLink } from '../components/ui/PageBackLink'
 import { PageHeader } from '../components/ui/PageHeader'
 import { SmartField } from '../components/ui/SmartField'
 import { SmartSelect } from '../components/ui/SmartSelect'
@@ -58,7 +59,7 @@ export function ProfileEdit() {
 
   return (
     <div className="space-y-5 nemea-page nemea-page--narrow">
-      <Link to={`/profils/${profile.id}`} className="btn-ghost !px-0 !border-0 !bg-transparent"><ArrowLeft size={16} /> Retour</Link>
+      <PageBackLink to={`/profils/${profile.id}`} label="Retour à la fiche" />
       <PageHeader eyebrow="Modifier" title={`${profile.firstName} ${profile.lastName}`} />
 
       <form onSubmit={handleSubmit} className="space-y-5">

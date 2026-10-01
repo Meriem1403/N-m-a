@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { ArrowLeft, Calendar, History, Sparkles, User } from 'lucide-react'
+import { Calendar, History, Sparkles, User } from 'lucide-react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
+import { PageBackLink } from '../components/ui/PageBackLink'
 import { PropertyCard } from '../components/cards/PropertyCard'
 import { Badge } from '../components/ui/Badge'
 import { ConfirmDialog } from '../components/ui/ConfirmDialog'
@@ -31,7 +32,7 @@ export function SearchDetail() {
 
   return (
     <div className="space-y-5 nemea-page">
-      <Link to="/recherches" className="btn-ghost !px-0 !border-0 !bg-transparent"><ArrowLeft size={16} /> Recherches</Link>
+      <PageBackLink to="/recherches" label="Recherches" />
 
       <div className="nemea-panel animate-fade-up">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">

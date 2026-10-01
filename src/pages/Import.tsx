@@ -18,20 +18,27 @@ export function Import() {
   const [fields, setFields] = useState({ firstName: '', lastName: '', phone: '', email: '', firstContactDate: '' })
   const navigate = useNavigate()
   const { importFromParsed } = useApp()
-  const parsed = useMemo(() => text.trim() ? parseImportText(text) : null, [text])
+  const parsed = useMemo(() => (text.trim() ? parseImportText(text) : null), [text])
 
   useEffect(() => {
-    if (parsed) setFields({
-      firstName: parsed.firstName ?? '', lastName: parsed.lastName ?? '',
-      phone: parsed.phone ?? '', email: parsed.email ?? '', firstContactDate: parsed.firstContactDate ?? '',
-    })
+    if (parsed) {
+      setFields({
+        firstName: parsed.firstName ?? '',
+        lastName: parsed.lastName ?? '',
+        phone: parsed.phone ?? '',
+        email: parsed.email ?? '',
+        firstContactDate: parsed.firstContactDate ?? '',
+      })
+    }
   }, [parsed])
 
   const handleConfirm = () => {
     const payload: ParsedImport = {
       ...(parsed ?? { rawText: text, confidence: {} }),
-      firstName: fields.firstName || 'Prénom', lastName: fields.lastName || 'Nom',
-      phone: fields.phone || undefined, email: fields.email || undefined,
+      firstName: fields.firstName || 'Prénom',
+      lastName: fields.lastName || 'Nom',
+      phone: fields.phone || undefined,
+      email: fields.email || undefined,
       firstContactDate: fields.firstContactDate || new Date().toISOString().split('T')[0],
     }
     const { profile } = importFromParsed(payload)
@@ -39,12 +46,12 @@ export function Import() {
   }
 
   return (
-    <div className="space-y-5 max-w-2xl nemea-page">
+    <div className="space-y-5 nemea-page nemea-page--wide">
       <FormHero
         variant="import"
         badge="Import rapide"
         title="Coller & détecter"
-        subtitle="Collez un email, un SMS ou une note. Néméa en extrait le contact et les critères de recherche."
+        subtitle="Collez un email, un SMS ou une note. Néméa extrait le contact et les critères de recherche du prospect."
       />
 
       <FormSection icon={Sparkles} title="Texte à analyser" description="Collez ou tapez le message brut du prospect">
@@ -76,7 +83,9 @@ export function Import() {
             <FormSection icon={Search} title="Recherche détectée" description="Critères extraits du texte">
               <div className="import-chip-grid">
                 {parsed.search.propertyTypes?.length ? <Chip label="Types" value={parsed.search.propertyTypes.join(', ')} c={parsed.confidence.types} /> : null}
-                {parsed.search.cities?.length ? <Chip label="Localisation" value={[...parsed.search.cities, ...(parsed.search.districts || [])].join(', ')} c={parsed.confidence.location} /> : null}
+                {parsed.search.cities?.length ? (
+                  <Chip label="Localisation" value={[...parsed.search.cities, ...(parsed.search.districts || [])].join(', ')} c={parsed.confidence.location} />
+                ) : null}
                 {parsed.search.surfaceMin ? <Chip label="Surface min" value={`${parsed.search.surfaceMin} m²`} c={parsed.confidence.surface} /> : null}
                 {parsed.search.budgetMax ? <Chip label="Budget max" value={formatPrice(parsed.search.budgetMax)} c={parsed.confidence.budget} /> : null}
               </div>

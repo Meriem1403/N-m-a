@@ -43,7 +43,7 @@ export function ScoreRing({ score, size = 56, strokeWidth = 3, animate = true }:
   return (
     <div
       className={`score-ring ${isHigh ? 'score-ring--high' : ''}`}
-      style={{ width: size, height: size }}
+      style={{ width: size, height: size, ['--score-ring-size' as string]: `${size}px` }}
     >
       {isHigh && <div className="score-ring__pulse" aria-hidden />}
       <svg width={size} height={size} className="score-ring__svg">

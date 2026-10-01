@@ -1,29 +1,24 @@
 import { useState } from 'react'
-import { ArrowLeft, Home, MapPin, Sparkles } from 'lucide-react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Home, MapPin, Sparkles } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { PageBackLink } from '../components/ui/PageBackLink'
 import type { PropertyStatus, PropertyType } from '../types'
 import { FormHero } from '../components/ui/FormHero'
 import { FormSection } from '../components/ui/FormSection'
 import { SmartCurrency } from '../components/ui/SmartCurrency'
 import { SmartField } from '../components/ui/SmartField'
 import { SmartSelect } from '../components/ui/SmartSelect'
-import { parseBudgetInput } from '../lib/smart'
+import { formatBudgetDisplay, parseBudgetInput } from '../lib/smart'
+import type { ParsedPropertyDraft } from '../types'
+import { PropertyPasteImport } from '../components/forms/PropertyPasteImport'
 import { statusLabels } from '../lib/utils'
+import { PropertyPhotoUpload } from '../components/ui/PropertyPhotoUpload'
+import { EquipmentToggle } from '../components/ui/EquipmentToggle'
+import { PropertyLocationPicker } from '../components/forms/PropertyLocationPicker'
 import { useApp } from '../store/AppContext'
 
 const typeOptions = ['studio', 'T1', 'T2', 'T3', 'T4', 'T5+', 'maison', 'loft'].map((t) => ({ value: t, label: t }))
 const statusOptions = Object.entries(statusLabels).map(([value, label]) => ({ value, label }))
-
-function Toggle({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }) {
-  return (
-    <button type="button" onClick={() => onChange(!checked)} className={`flex items-center justify-between w-full rounded-xl border px-4 py-3 text-sm transition-all ${checked ? 'border-indigo-400/30 bg-indigo-500/10 text-indigo-200 scale-[1.01]' : 'border-white/8 bg-white/3 text-nemea-muted hover:border-white/12'}`}>
-      <span>{label}</span>
-      <span className={`w-10 h-5 rounded-full relative flex-shrink-0 transition-colors ${checked ? 'bg-indigo-500' : 'bg-white/15'}`}>
-        <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform duration-200 ${checked ? 'translate-x-5' : 'translate-x-0.5'}`} />
-      </span>
-    </button>
-  )
-}
 
 export function PropertyNew() {
   const navigate = useNavigate()
@@ -42,6 +37,24 @@ export function PropertyNew() {
   const [parking, setParking] = useState(false)
   const [elevator, setElevator] = useState(false)
   const [view, setView] = useState(false)
+  const [photos, setPhotos] = useState<string[]>([])
+
+  const applyFromPaste = (draft: ParsedPropertyDraft) => {
+    if (draft.reference) setReference(draft.reference)
+    if (draft.price != null) setPriceStr(formatBudgetDisplay(draft.price))
+    if (draft.city) setCity(draft.city)
+    if (draft.district) setDistrict(draft.district)
+    if (draft.type) setType(draft.type)
+    if (draft.surface != null) setSurface(String(draft.surface))
+    if (draft.rooms != null) setRooms(String(draft.rooms))
+    if (draft.status) setStatus(draft.status)
+    if (draft.description) setDescription(draft.description)
+    if (draft.terrace) setTerrace(true)
+    if (draft.balcony) setBalcony(true)
+    if (draft.parking) setParking(true)
+    if (draft.elevator) setElevator(true)
+    if (draft.view) setView(true)
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -54,24 +67,26 @@ export function PropertyNew() {
       surface: parseBudgetInput(surface) ?? 0,
       rooms: parseInt(rooms, 10) || 3,
       terrace, balcony, garden: false, parking, garage: false, cave: false, elevator, view, works: false,
-      photos: [], status, description: description || undefined,
+      photos, status, description: description || undefined,
     })
     navigate(`/biens/${property.id}`)
   }
 
   return (
-    <div className="space-y-5 nemea-page nemea-page--narrow">
-      <Link to="/biens" className="btn-ghost !px-0 !border-0 !bg-transparent"><ArrowLeft size={16} /> Biens</Link>
+    <div className="space-y-5 nemea-page nemea-page--wide">
+      <PageBackLink to="/biens" label="Biens" />
 
       <FormHero
         variant="property"
         badge="Nouveau bien"
         title="Ajouter un bien immobilier"
-        subtitle="Prix formaté en direct. Surface et équipements alimentent les correspondances."
+        subtitle="Collez une annonce pour préremplir, ou saisissez à la main. Les correspondances utilisent surface et équipements."
       />
 
+      <PropertyPasteImport onApply={applyFromPaste} />
+
       <form onSubmit={handleSubmit} className="space-y-5">
-        <FormSection icon={Home} title="Caractéristiques" description="Référence, prix et typologie" step={1}>
+        <FormSection icon={Home} title="Caractéristiques" description="Référence, prix et typologie — ou saisie manuelle" step={1}>
           <SmartField label="Référence" value={reference} onChange={setReference} smartFormat={false} />
           <SmartCurrency label="Prix" value={priceStr} onChange={setPriceStr} required placeholder="450 000" hint="Montant en euros" />
           <div className="responsive-grid-form">
@@ -79,26 +94,29 @@ export function PropertyNew() {
             <SmartSelect label="Statut" value={status} onChange={(v) => setStatus(v as PropertyStatus)} options={statusOptions} />
           </div>
           <div className="responsive-grid-form">
-            <SmartField label="Surface" value={surface} onChange={setSurface} suffix="m²" inputMode="decimal" placeholder="75" />
-            <SmartField label="Pièces" value={rooms} onChange={setRooms} inputMode="numeric" />
+            <SmartField label="Surface (m²)" value={surface} onChange={setSurface} smartFormat suffix="m²" inputMode="decimal" placeholder="75" />
+            <SmartField label="Pièces" value={rooms} onChange={setRooms} smartFormat={false} inputMode="numeric" />
           </div>
         </FormSection>
 
-        <FormSection icon={MapPin} title="Localisation" description="Ville et quartier du bien" step={2} className="stagger-2">
-          <div className="responsive-grid-form">
-            <SmartField label="Ville" value={city} onChange={setCity} smartFormat={false} />
-            <SmartField label="Quartier" value={district} onChange={setDistrict} smartFormat={false} placeholder="8e arrondissement" />
-          </div>
+        <FormSection icon={MapPin} title="Localisation" description="Même liste PACA que recherches et formulaires client" step={2} className="stagger-2">
+          <PropertyLocationPicker
+            city={city}
+            district={district}
+            onCityChange={setCity}
+            onDistrictChange={setDistrict}
+          />
           <SmartField label="Description" value={description} onChange={setDescription} smartFormat={false} placeholder="Atouts, état, visite…" />
+          <PropertyPhotoUpload photos={photos} onChange={setPhotos} />
         </FormSection>
 
         <FormSection icon={Sparkles} title="Équipements" description="Critères pris en compte pour les matchs" step={3} className="stagger-3">
           <div className="responsive-grid-form">
-            <Toggle label="Terrasse" checked={terrace} onChange={setTerrace} />
-            <Toggle label="Balcon" checked={balcony} onChange={setBalcony} />
-            <Toggle label="Parking" checked={parking} onChange={setParking} />
-            <Toggle label="Ascenseur" checked={elevator} onChange={setElevator} />
-            <Toggle label="Vue" checked={view} onChange={setView} />
+            <EquipmentToggle label="Terrasse" checked={terrace} onChange={setTerrace} activeScale />
+            <EquipmentToggle label="Balcon" checked={balcony} onChange={setBalcony} activeScale />
+            <EquipmentToggle label="Parking" checked={parking} onChange={setParking} activeScale />
+            <EquipmentToggle label="Ascenseur" checked={elevator} onChange={setElevator} activeScale />
+            <EquipmentToggle label="Vue" checked={view} onChange={setView} activeScale />
           </div>
         </FormSection>
 

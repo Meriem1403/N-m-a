@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { ArrowLeft } from 'lucide-react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
+import { PageBackLink } from '../components/ui/PageBackLink'
 import { PageHeader } from '../components/ui/PageHeader'
 import { SmartCurrency } from '../components/ui/SmartCurrency'
 import { SmartField } from '../components/ui/SmartField'
@@ -8,21 +8,13 @@ import { SmartSelect } from '../components/ui/SmartSelect'
 import { formatBudgetDisplay, parseBudgetInput } from '../lib/smart'
 import { statusLabels } from '../lib/utils'
 import type { PropertyStatus, PropertyType } from '../types'
+import { PropertyPhotoUpload } from '../components/ui/PropertyPhotoUpload'
+import { EquipmentToggle } from '../components/ui/EquipmentToggle'
+import { PropertyLocationPicker } from '../components/forms/PropertyLocationPicker'
 import { useApp } from '../store/AppContext'
 
 const typeOptions = ['studio', 'T1', 'T2', 'T3', 'T4', 'T5+', 'maison', 'loft'].map((t) => ({ value: t, label: t }))
 const statusOptions = Object.entries(statusLabels).map(([value, label]) => ({ value, label }))
-
-function Toggle({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }) {
-  return (
-    <button type="button" onClick={() => onChange(!checked)} className={`flex items-center justify-between w-full rounded-xl border px-4 py-3 text-sm transition-all ${checked ? 'border-indigo-400/30 bg-indigo-500/10 text-indigo-200' : 'border-white/8 bg-white/3 text-nemea-muted'}`}>
-      <span>{label}</span>
-      <span className={`w-10 h-5 rounded-full relative flex-shrink-0 ${checked ? 'bg-indigo-500' : 'bg-white/15'}`}>
-        <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${checked ? 'translate-x-5' : 'translate-x-0.5'}`} />
-      </span>
-    </button>
-  )
-}
 
 export function PropertyEdit() {
   const { id } = useParams()
@@ -44,6 +36,7 @@ export function PropertyEdit() {
   const [parking, setParking] = useState(property?.parking ?? false)
   const [elevator, setElevator] = useState(property?.elevator ?? false)
   const [view, setView] = useState(property?.view ?? false)
+  const [photos, setPhotos] = useState<string[]>(property?.photos ?? [])
 
   if (!property) {
     return (
@@ -64,14 +57,14 @@ export function PropertyEdit() {
       type, surface: parseBudgetInput(surface) ?? property.surface,
       rooms: parseInt(rooms, 10) || property.rooms,
       status, description: description || undefined,
-      terrace, balcony, parking, elevator, view,
+      terrace, balcony, parking, elevator, view, photos,
     })
     navigate(`/biens/${property.id}`)
   }
 
   return (
-    <div className="space-y-5 nemea-page nemea-page--narrow">
-      <Link to={`/biens/${property.id}`} className="btn-ghost !px-0 !border-0 !bg-transparent"><ArrowLeft size={16} /> Retour</Link>
+    <div className="space-y-5 nemea-page nemea-page--wide">
+      <PageBackLink to={`/biens/${property.id}`} label="Retour à la fiche" />
       <PageHeader eyebrow="Modifier" title={property.reference} />
 
       <form onSubmit={handleSubmit} className="space-y-5">
@@ -82,25 +75,28 @@ export function PropertyEdit() {
             <SmartSelect label="Type" value={type} onChange={(v) => setType(v as PropertyType)} options={typeOptions} />
             <SmartSelect label="Statut" value={status} onChange={(v) => setStatus(v as PropertyStatus)} options={statusOptions} />
           </div>
+          <PropertyLocationPicker
+            city={city}
+            district={district}
+            onCityChange={setCity}
+            onDistrictChange={setDistrict}
+          />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <SmartField label="Ville" value={city} onChange={setCity} smartFormat={false} />
-            <SmartField label="Quartier" value={district} onChange={setDistrict} smartFormat={false} />
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <SmartField label="Surface (m²)" value={surface} onChange={setSurface} smartFormat={false} suffix="m²" />
+            <SmartField label="Surface (m²)" value={surface} onChange={setSurface} smartFormat suffix="m²" />
             <SmartField label="Pièces" value={rooms} onChange={setRooms} smartFormat={false} inputMode="numeric" />
           </div>
           <SmartField label="Description" value={description} onChange={setDescription} smartFormat={false} />
+          <PropertyPhotoUpload photos={photos} onChange={setPhotos} />
         </section>
 
         <section className="nemea-panel space-y-2.5 animate-fade-up stagger-2">
           <h2 className="nemea-panel-title !mb-0">Équipements</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-            <Toggle label="Terrasse" checked={terrace} onChange={setTerrace} />
-            <Toggle label="Balcon" checked={balcony} onChange={setBalcony} />
-            <Toggle label="Parking" checked={parking} onChange={setParking} />
-            <Toggle label="Ascenseur" checked={elevator} onChange={setElevator} />
-            <Toggle label="Vue" checked={view} onChange={setView} />
+            <EquipmentToggle label="Terrasse" checked={terrace} onChange={setTerrace} />
+            <EquipmentToggle label="Balcon" checked={balcony} onChange={setBalcony} />
+            <EquipmentToggle label="Parking" checked={parking} onChange={setParking} />
+            <EquipmentToggle label="Ascenseur" checked={elevator} onChange={setElevator} />
+            <EquipmentToggle label="Vue" checked={view} onChange={setView} />
           </div>
         </section>
 

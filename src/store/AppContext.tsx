@@ -25,6 +25,13 @@ import {
   patchClientIntake,
   setIntakeTokenActive,
 } from '../lib/intakeRepo'
+import {
+  demoCreateIntakeToken,
+  demoFetchClientIntakes,
+  demoFetchIntakeTokens,
+  demoPatchIntake,
+  demoSetTokenActive,
+} from '../lib/demoIntakeStore'
 import { intakeToParsedImport } from '../lib/intakeUtils'
 import type {
   ClientIntake,
@@ -74,6 +81,7 @@ interface AppContextValue extends AppState {
   intakeTokens: IntakeToken[]
   clientIntakes: ClientIntake[]
   pendingIntakeCount: number
+  intakeLoadError: string | null
   refreshIntakes: () => Promise<void>
   createShareLink: (label?: string) => Promise<IntakeToken>
   deactivateShareLink: (tokenId: string) => Promise<void>
@@ -139,15 +147,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [properties, setProperties] = useState<Property[]>(cloud ? [] : demoProperties)
   const [intakeTokens, setIntakeTokens] = useState<IntakeToken[]>([])
   const [clientIntakes, setClientIntakes] = useState<ClientIntake[]>([])
+  const [intakeLoadError, setIntakeLoadError] = useState<string | null>(null)
 
   const refreshIntakes = useCallback(async () => {
-    if (!cloud) return
+    if (!cloud) {
+      setIntakeTokens(demoFetchIntakeTokens())
+      setClientIntakes(demoFetchClientIntakes())
+      setIntakeLoadError(null)
+      return
+    }
     try {
       const [tokens, intakes] = await Promise.all([fetchIntakeTokens(), fetchClientIntakes()])
       setIntakeTokens(tokens)
       setClientIntakes(intakes)
+      setIntakeLoadError(null)
     } catch (err) {
       console.error(err)
+      setIntakeLoadError(formatSupabaseError(err))
     }
   }, [cloud])
 
@@ -198,6 +214,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       cancelled = true
     }
   }, [cloud, session?.user.id, refreshIntakes])
+
+  useEffect(() => {
+    if (!cloud && ready) void refreshIntakes()
+  }, [cloud, ready, refreshIntakes])
 
   useEffect(() => {
     if (!cloud || !session) return
@@ -408,20 +428,27 @@ export function AppProvider({ children }: { children: ReactNode }) {
   )
 
   const createShareLink = useCallback(async (label?: string) => {
+    if (!cloud) {
+      const token = demoCreateIntakeToken(label)
+      await refreshIntakes()
+      return token
+    }
     const token = await createIntakeToken(label)
     await refreshIntakes()
     return token
-  }, [refreshIntakes])
+  }, [cloud, refreshIntakes])
 
   const deactivateShareLink = useCallback(async (tokenId: string) => {
-    await setIntakeTokenActive(tokenId, false)
+    if (!cloud) demoSetTokenActive(tokenId, false)
+    else await setIntakeTokenActive(tokenId, false)
     await refreshIntakes()
-  }, [refreshIntakes])
+  }, [cloud, refreshIntakes])
 
   const updateIntakeNotes = useCallback(async (intakeId: string, notes: string) => {
-    await patchClientIntake(intakeId, { agentNotes: notes })
+    if (!cloud) demoPatchIntake(intakeId, { agentNotes: notes })
+    else await patchClientIntake(intakeId, { agentNotes: notes })
     await refreshIntakes()
-  }, [refreshIntakes])
+  }, [cloud, refreshIntakes])
 
   const processClientIntake = useCallback(async (intakeId: string, agentNotes?: string) => {
     const intake = clientIntakes.find((i) => i.id === intakeId)
@@ -431,19 +458,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
       parsed.notes = [parsed.notes, agentNotes.trim()].filter(Boolean).join('\n\n')
     }
     const { profile } = importFromParsed(parsed)
-    await patchClientIntake(intakeId, {
-      status: 'processed',
+    const patch = {
+      status: 'processed' as const,
       processedProfileId: profile.id,
       agentNotes: agentNotes?.trim() || intake.agentNotes,
-    })
+    }
+    if (!cloud) demoPatchIntake(intakeId, patch)
+    else await patchClientIntake(intakeId, patch)
     await refreshIntakes()
     return profile.id
-  }, [clientIntakes, importFromParsed, refreshIntakes])
+  }, [clientIntakes, cloud, importFromParsed, refreshIntakes])
 
   const dismissClientIntake = useCallback(async (intakeId: string) => {
-    await patchClientIntake(intakeId, { status: 'dismissed' })
+    if (!cloud) demoPatchIntake(intakeId, { status: 'dismissed' })
+    else await patchClientIntake(intakeId, { status: 'dismissed' })
     await refreshIntakes()
-  }, [refreshIntakes])
+  }, [cloud, refreshIntakes])
 
   const value = useMemo(
     () => ({
@@ -455,7 +485,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       importFromParsed,
       getProfile, getSearch, getProperty, getSearchesForProfile,
       getMatchesForProperty, getMatchesForSearch, getAllMatches, getAllHistory,
-      intakeTokens, clientIntakes, pendingIntakeCount, refreshIntakes,
+      intakeTokens, clientIntakes, pendingIntakeCount, intakeLoadError, refreshIntakes,
       createShareLink, deactivateShareLink, processClientIntake, dismissClientIntake, updateIntakeNotes,
     }),
     [
@@ -467,7 +497,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       importFromParsed,
       getProfile, getSearch, getProperty, getSearchesForProfile,
       getMatchesForProperty, getMatchesForSearch, getAllMatches, getAllHistory,
-      intakeTokens, clientIntakes, pendingIntakeCount, refreshIntakes,
+      intakeTokens, clientIntakes, pendingIntakeCount, intakeLoadError, refreshIntakes,
       createShareLink, deactivateShareLink, processClientIntake, dismissClientIntake, updateIntakeNotes,
     ],
   )

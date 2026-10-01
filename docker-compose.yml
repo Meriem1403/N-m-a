@@ -1,0 +1,25 @@
+# Néméa — dev local uniquement (aligné avec le repo Git)
+#
+# Ce projet = front React/Vite (ce conteneur).
+# Pas de Postgres/API dans Docker : la base et l’auth sont sur Supabase (cloud).
+# En prod : Netlify (build statique) + Supabase, voir DEPLOY.md.
+#
+# Port hôte 5180 pour ne pas entrer en conflit avec `npm run dev` (5173).
+
+services:
+  nemea:
+    build: .
+    container_name: nemea-dev
+    ports:
+      - "5180:5173"
+    volumes:
+      - .:/app
+      - nemea_node_modules:/app/node_modules
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      CHOKIDAR_USEPOLLING: "true"
+
+volumes:
+  nemea_node_modules:

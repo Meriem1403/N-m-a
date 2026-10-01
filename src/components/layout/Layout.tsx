@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
-import { Menu } from 'lucide-react'
-import { Outlet, useLocation } from 'react-router-dom'
+import { ChevronLeft, Menu } from 'lucide-react'
+import { Link, Outlet, useLocation } from 'react-router-dom'
+import { getMobileBackNav } from '../../lib/mobileNav'
 import { AmbientLayer } from './AmbientLayer'
 import { SidebarNav } from './SidebarNav'
 import { PageTransition } from './PageTransition'
@@ -26,9 +27,12 @@ export function Layout() {
   const location = useLocation()
 
   const pageTitle = pageTitles[location.pathname]
-    ?? (location.pathname.startsWith('/profils/') ? 'Profil'
+    ?? (location.pathname.endsWith('/modifier') ? 'Modification'
+      : location.pathname.startsWith('/profils/') ? 'Profil'
       : location.pathname.startsWith('/recherches/') ? 'Recherche'
       : location.pathname.startsWith('/biens/') ? 'Bien' : 'Néméa')
+
+  const mobileBack = getMobileBackNav(location.pathname)
 
   useEffect(() => {
     setNavOpen(false)
@@ -60,17 +64,25 @@ export function Layout() {
 
             <main id="main-content" className="main-content" tabIndex={-1}>
               <div className="workspace-mobile-bar">
-                <button
-                  type="button"
-                  className="workspace-mobile-menu-btn"
-                  onClick={() => setNavOpen(true)}
-                  aria-expanded={navOpen}
-                  aria-controls="sidebar-nav"
-                >
-                  <Menu size={20} strokeWidth={1.75} aria-hidden />
-                  <span>Menu</span>
-                </button>
-                <p className="workspace-mobile-zone truncate">{pageTitle}</p>
+                <div className="workspace-mobile-bar__start">
+                  {mobileBack ? (
+                    <Link to={mobileBack.to} className="workspace-mobile-back" aria-label={`Retour : ${mobileBack.label}`}>
+                      <ChevronLeft size={20} strokeWidth={2} aria-hidden />
+                    </Link>
+                  ) : null}
+                  <button
+                    type="button"
+                    className="workspace-mobile-menu-btn"
+                    onClick={() => setNavOpen(true)}
+                    aria-expanded={navOpen}
+                    aria-controls="sidebar-nav"
+                  >
+                    <Menu size={18} strokeWidth={2} aria-hidden />
+                    {!mobileBack && <span>Menu</span>}
+                  </button>
+                </div>
+                <h1 className="workspace-mobile-title truncate">{pageTitle}</h1>
+                <div className="workspace-mobile-bar__end" aria-hidden />
               </div>
 
               <PageTransition>

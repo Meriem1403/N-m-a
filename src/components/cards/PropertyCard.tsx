@@ -22,13 +22,13 @@ export function PropertyCard({ property, topMatchScore, matchCount }: PropertyCa
     >
       <div className="property-card__media relative">
         <PropertyImage property={property} aspect="card" />
-        <div className="property-card__overlay" aria-hidden />
+        <div className="property-media-scrim" aria-hidden />
         <div className="absolute top-3 left-3 z-10">
-          <Badge className={statusColors[property.status]}>{statusLabels[property.status]}</Badge>
+          <Badge className={`${statusColors[property.status]} nemea-badge--on-media`}>{statusLabels[property.status]}</Badge>
         </div>
         {topMatchScore !== undefined && topMatchScore > 0 && (
           <div className="absolute top-3 right-3 z-10" aria-label={`Score de correspondance ${topMatchScore} pourcent`}>
-            <ScoreRing score={topMatchScore} size={40} strokeWidth={2.5} />
+            <ScoreRing score={topMatchScore} size={44} strokeWidth={2.5} />
           </div>
         )}
       </div>

@@ -28,6 +28,8 @@ export function getProfileAvatar(profileId: string, firstName: string, lastName:
 }
 
 export function getPropertyPhoto(propertyId: string, photos: string[]): string {
-  if (photos[0]?.startsWith('/')) return photos[0]
+  const first = photos[0]
+  if (first?.startsWith('data:') || first?.startsWith('http')) return first
+  if (first?.startsWith('/')) return first
   return propertyPhotos[propertyId] ?? '/demo/properties/b1.svg'
 }

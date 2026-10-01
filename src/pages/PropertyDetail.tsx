@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { ArrowLeft, MapPin, Maximize } from 'lucide-react'
+import { MapPin, Maximize } from 'lucide-react'
+import { PageBackLink } from '../components/ui/PageBackLink'
 import { PropertyImage } from '../components/ui/PropertyImage'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { MatchCard } from '../components/cards/MatchCard'
@@ -36,20 +37,24 @@ export function PropertyDetail() {
 
   return (
     <div className="space-y-5 nemea-page">
-      <Link to="/biens" className="btn-ghost !px-0 !border-0 !bg-transparent"><ArrowLeft size={16} /> Biens</Link>
+      <PageBackLink to="/biens" label="Biens" />
 
       <div className="nemea-panel overflow-hidden !p-0 animate-fade-up">
         <div className="relative border-b border-white/10">
           <PropertyImage property={property} aspect="hero" />
-          <div className="absolute bottom-4 left-4 sm:left-5 right-4">
+          <div className="property-media-scrim" aria-hidden />
+          <div className="absolute bottom-4 left-4 sm:left-5 right-4 z-[2]">
             <ProHeading
               variant="detail"
+              className="pro-heading--on-media"
               eyebrow={property.reference}
               title={<span className="tabular-nums">{formatPrice(property.price)}</span>}
               animated={false}
             />
           </div>
-          <div className="absolute top-4 right-4"><Badge className={statusColors[property.status]}>{statusLabels[property.status]}</Badge></div>
+          <div className="absolute top-4 right-4 z-[2]">
+            <Badge className={`${statusColors[property.status]} nemea-badge--on-media`}>{statusLabels[property.status]}</Badge>
+          </div>
         </div>
         <div className="p-4 sm:p-6">
           <DetailActions editPath={`/biens/${property.id}/modifier`} onDelete={() => setConfirmDelete(true)} />

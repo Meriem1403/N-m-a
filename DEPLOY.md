@@ -10,6 +10,23 @@ Stack recommandée :
 Sans variables Supabase, l’app tourne en **mode démo** (données en mémoire, perdues au rechargement).  
 Avec Supabase, les profils, recherches et biens sont **persistés en base**.
 
+### Développement local (Docker)
+
+Le repo ne contient **que le front**. Docker lance uniquement Vite — **un seul service** `nemea`, c’est normal.
+
+| Où | Quoi |
+|----|------|
+| Conteneur `nemea` | Interface React (`http://localhost:5180`) |
+| [Supabase](https://supabase.com) | Base + auth (URL/clé dans `.env`) |
+| Netlify (prod) | Hébergement du build, pas Docker |
+
+```bash
+docker compose up --build -d
+docker logs -f nemea-dev
+```
+
+Port **5180** sur la machine → **5173** dans le conteneur (évite le conflit avec `npm run dev` sur 5173).
+
 ---
 
 ## 1. Créer la base Supabase
@@ -110,7 +127,8 @@ Tous les **comptes connectés** voient les **mêmes** profils, recherches et bie
 
 ### 5.5 Formulaires client (lien public)
 
-1. **SQL Editor** → exécuter `supabase/intake_forms.sql` (tables + RLS + fonction lien public).
+1. **SQL Editor** → exécuter **`supabase/apply_updates.sql`** (recommandé, idempotent)  
+   ou `supabase/intake_forms.sql` si base neuve sans ces tables.
 2. Dans l’app : **Formulaires client** → **Générer et copier le lien** → envoyer par SMS / WhatsApp / email.
 3. La cliente ouvre `/f/…` sans compte ; la demande apparaît dans l’app (alerte + badge menu).
 
@@ -121,6 +139,19 @@ Tous les **comptes connectés** voient les **mêmes** profils, recherches et bie
    - **Site URL** : l’URL Netlify de l’app (ex. `https://votre-site.netlify.app`)
    - **Redirect URLs** : ajouter `https://votre-site.netlify.app/reinitialiser-mot-de-passe` (et la même URL en `http://localhost:5173/...` pour le dev).
 3. Sans accès au mail : **Authentication** → **Users** → ton utilisateur → **Send password recovery** ou définir un **nouveau mot de passe** manuellement (admin Supabase).
+
+---
+
+## 6. Mise à jour Supabase après un pull Git (sans reset des données)
+
+Les évolutions récentes de l’app (localisation PACA, import profil/bien, photos en base64, Docker, UI) **ne demandent pas de nouvelles colonnes** sur `profiles`, `searches` ou `properties` si vous avez déjà exécuté `schema.sql`.
+
+| Étape | Fichier SQL | Quand |
+|-------|-------------|--------|
+| 1 | [`supabase/apply_updates.sql`](./supabase/apply_updates.sql) | Formulaires client, liens `/f/…` |
+| 2 | [`supabase/secure_rls.sql`](./supabase/secure_rls.sql) | Uniquement si accès anonyme aux tables CRM (anciennes policies `demo_*`) |
+
+Puis **Deploy** sur Netlify (ou rebuild Docker) pour servir le nouveau front.
 
 ---
 

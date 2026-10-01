@@ -159,6 +159,23 @@ export interface PublicIntakePayload {
   criteria: Record<string, unknown>
 }
 
+export interface ParsedPropertyDraft {
+  reference?: string
+  price?: number
+  city?: string
+  district?: string
+  type?: PropertyType
+  surface?: number
+  rooms?: number
+  terrace?: boolean
+  balcony?: boolean
+  parking?: boolean
+  elevator?: boolean
+  view?: boolean
+  description?: string
+  status?: PropertyStatus
+}
+
 export interface ParsedImport {
   firstName?: string
   lastName?: string
@@ -171,3 +188,10 @@ export interface ParsedImport {
   rawText: string
   confidence: Record<string, number>
 }
+
+export interface ParsedPropertyImport {
+  rawText: string
+  confidence: Record<string, number>
+  property: ParsedPropertyDraft
+}
+

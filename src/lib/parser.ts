@@ -1,4 +1,18 @@
-import type { CriterionLevel, ContactSource, ParsedImport, PropertyType, SearchCriteria } from '../types'
+import { PACA_CITIES } from '../data/pacaLocations'
+import type {
+  CriterionLevel,
+  ContactSource,
+  ParsedImport,
+  ParsedPropertyDraft,
+  ParsedPropertyImport,
+  PropertyStatus,
+  PropertyType,
+  SearchCriteria,
+} from '../types'
+
+function escapeRegex(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
 
 const defaultCriterion = (level: CriterionLevel = 'indifferent') => ({ level })
 
@@ -95,19 +109,34 @@ export function parseImportText(rawText: string): ParsedImport {
     confidence.phone = 0.9
   }
 
-  // Name - try "Prénom Nom" at start or before phone/email
-  const namePatterns = [
-    /^([A-ZÀ-Ÿ][a-zà-ÿ]+)\s+([A-ZÀ-Ÿ][a-zà-ÿ-]+)/,
-    /(?:M\.|Mme|Monsieur|Madame)\s+([A-ZÀ-Ÿ][a-zà-ÿ]+)\s+([A-ZÀ-Ÿ][a-zà-ÿ-]+)/i,
-  ]
-  for (const pattern of namePatterns) {
-    const match = text.match(pattern)
-    if (match) {
-      result.firstName = match[1]
-      result.lastName = match[2]
-      confidence.name = 0.85
-      break
-    }
+  const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase()
+
+  // Segment avant téléphone / email / virgule (souvent "Nom Prénom, ...")
+  const head = text.split(/(?:,|\s+(?=(?:\+33|0)\s*[1-9])|[\w.+-]+@)/)[0]?.trim() ?? text
+
+  const civilityTwo = head.match(
+    /(?:M\.|Mme\.?|Mlle\.?|Madame|Monsieur)\s+([A-Za-zÀ-ÿ'-]+)\s+([A-Za-zÀ-ÿ'-]+)/i,
+  )
+  const civilityOne = head.match(/(?:M\.|Mme\.?|Mlle\.?|Madame|Monsieur)\s+([A-Za-zÀ-ÿ'-]+)/i)
+  const twoWords = head.match(/\b([A-Za-zÀ-ÿ'-]{2,})\s+([A-Za-zÀ-ÿ'-]{2,})\b/)
+  const jeMatch = text.match(/\b(?:je\s+m['’]?appelle|c['’]est)\s+([A-Za-zÀ-ÿ'-]+)(?:\s+([A-Za-zÀ-ÿ'-]+))?/i)
+
+  if (civilityTwo) {
+    result.firstName = cap(civilityTwo[1])
+    result.lastName = cap(civilityTwo[2])
+    confidence.name = 0.9
+  } else if (jeMatch?.[2]) {
+    result.firstName = cap(jeMatch[1])
+    result.lastName = cap(jeMatch[2])
+    confidence.name = 0.88
+  } else if (twoWords && !/^(je|il|elle|nous|vous|they|cherche|budget|minimum)/i.test(twoWords[1])) {
+    result.firstName = cap(twoWords[1])
+    result.lastName = cap(twoWords[2])
+    confidence.name = 0.82
+  } else if (civilityOne) {
+    result.lastName = cap(civilityOne[1])
+    result.firstName = result.firstName ?? ''
+    confidence.name = 0.75
   }
 
   // Contact date
@@ -154,25 +183,34 @@ export function parseImportText(rawText: string): ParsedImport {
     confidence.types = 0.9
   }
 
-  // Marseille districts
-  const marseilleMatch = text.match(/marseille\s*(\d{1,2}(?:\s*(?:ou|\/|,)\s*\d{1,2})*)/i)
-  if (marseilleMatch) {
-    search.cities = ['Marseille']
-    const districts = marseilleMatch[1].match(/\d{1,2}/g) || []
-    search.districts = districts.map((d) => `${d}e arrondissement`)
+  const foundCities: string[] = []
+  for (const city of PACA_CITIES) {
+    if (new RegExp(`\\b${escapeRegex(city)}\\b`, 'i').test(text)) {
+      foundCities.push(city)
+    }
+  }
+  if (foundCities.length) {
+    search.cities = foundCities
     confidence.location = 0.85
-  } else {
-    const cityMatch = text.match(/(?:à|a)\s+([A-ZÀ-Ÿ][a-zà-ÿ\s-]+?)(?:\s+\d|$|,|\.|\s+(?:budget|minimum|max|m²|m2))/i)
-    if (cityMatch) {
-      search.cities = [cityMatch[1].trim()]
-      confidence.location = 0.7
+  }
+
+  if (/\bmarseille\b/i.test(text)) {
+    const marseilleMatch = text.match(/marseille\s*(\d{1,2}(?:\s*(?:ou|\/|,|-)\s*\d{1,2})*)/i)
+    if (marseilleMatch) {
+      const districts = marseilleMatch[1].match(/\d{1,2}/g) || []
+      search.districts = districts.map((d) => `${d}e arrondissement`)
+    } else {
+      const arrondissements = [...text.matchAll(/\b(\d{1,2})(?:e|er)\s*(?:arrondissement|arr\.?)?/gi)]
+      const nums = [...new Set(arrondissements.map((m) => m[1]))]
+      if (nums.length) {
+        search.districts = nums.map((d) => `${d}e arrondissement`)
+      }
     }
   }
 
-  // Surface
-  const surfaceMatch = text.match(/(?:minimum|min\.?|au moins|>=?\s*)?\s*(\d+)\s*m[²2]/i)
-  if (surfaceMatch) {
-    search.surfaceMin = parseInt(surfaceMatch[1], 10)
+  const surfaceMin = parseSurfaceSqm(text, 'searchMin')
+  if (surfaceMin != null) {
+    search.surfaceMin = Math.round(surfaceMin)
     confidence.surface = 0.9
   }
 
@@ -227,4 +265,129 @@ export function parseImportText(rawText: string): ParsedImport {
   }
 
   return result
+}
+
+function parsePacaCity(text: string): string | undefined {
+  for (const city of PACA_CITIES) {
+    if (new RegExp(`\\b${escapeRegex(city)}\\b`, 'i').test(text)) return city
+  }
+  return undefined
+}
+
+function parseMarseilleDistrict(text: string): string | undefined {
+  if (!/\bmarseille\b/i.test(text)) return undefined
+  const marseilleMatch = text.match(/marseille\s*(\d{1,2})/i)
+  if (marseilleMatch) return `${marseilleMatch[1]}e arrondissement`
+  const arr = text.match(/\b(\d{1,2})(?:e|er)\s*(?:arrondissement|arr\.?)?/i)
+  if (arr) return `${arr[1]}e arrondissement`
+  return undefined
+}
+
+function parsePropertyType(text: string): PropertyType | undefined {
+  const m = text.match(/\b(studio|T[1-5](?:\+)?|maison|loft)\b/i)
+  return m ? (m[1].toUpperCase() as PropertyType) : undefined
+}
+
+function parseEuroAmounts(text: string): number[] {
+  const matches = text.match(/(\d[\d\s.]{2,})\s*€/g)
+  if (!matches) return []
+  return matches.map((b) => parseInt(b.replace(/[\s.€]/g, ''), 10)).filter((n) => !Number.isNaN(n))
+}
+
+/** Surface en m² — ne pas utiliser \\b après ² (bug JS). */
+function parseSurfaceSqm(text: string, mode: 'listing' | 'searchMin'): number | undefined {
+  const re = /(\d{1,3}(?:[.,]\d+)?)\s*(?:m²|m2|m\s*²)/gi
+  const candidates: number[] = []
+
+  for (const m of text.matchAll(re)) {
+    const idx = m.index ?? 0
+    const before = text.slice(Math.max(0, idx - 28), idx).toLowerCase()
+    if (mode === 'searchMin' && /(?:minimum|min\.?|au moins)\s*$/i.test(before)) {
+      candidates.push(parseFloat(m[1].replace(',', '.')))
+      continue
+    }
+    if (mode === 'listing' && /(?:minimum|min\.?|au moins)\s*$/i.test(before)) {
+      continue
+    }
+    const val = parseFloat(m[1].replace(',', '.'))
+    if (!Number.isNaN(val) && val >= 9 && val <= 2000) candidates.push(val)
+  }
+
+  if (!candidates.length) return undefined
+  return mode === 'listing' ? candidates[0] : candidates[candidates.length - 1]
+}
+
+export function parsePropertyImportText(rawText: string): ParsedPropertyImport {
+  const text = rawText.trim()
+  const confidence: Record<string, number> = {}
+  const property: ParsedPropertyDraft = {}
+
+  const refMatch = text.match(/\b((?:MAR|REF)-[\dA-Z-]+)\b/i)
+    ?? text.match(/réf(?:érence)?\.?\s*[:.]?\s*([A-Z0-9-]+)/i)
+  if (refMatch) {
+    property.reference = refMatch[1].toUpperCase()
+    confidence.reference = 0.9
+  }
+
+  const type = parsePropertyType(text)
+  if (type) {
+    property.type = type
+    confidence.types = 0.9
+  }
+
+  const city = parsePacaCity(text)
+  if (city) {
+    property.city = city
+    confidence.location = 0.85
+  }
+
+  const district = parseMarseilleDistrict(text)
+  if (district) {
+    property.district = district
+    confidence.location = 0.85
+  }
+
+  const surface = parseSurfaceSqm(text, 'listing')
+  if (surface != null) {
+    property.surface = Math.round(surface)
+    confidence.surface = 0.9
+  }
+
+  const roomsMatch = text.match(/(\d+)\s*pi[èe]ce/i)
+  if (roomsMatch) {
+    property.rooms = parseInt(roomsMatch[1], 10)
+    confidence.rooms = 0.85
+  }
+
+  const priceMatch = text.match(/(?:prix|vente|honoraires inclus)?\s*[:.]?\s*(\d[\d\s.]*)\s*€/i)
+  const amounts = parseEuroAmounts(text)
+  if (priceMatch) {
+    property.price = parseInt(priceMatch[1].replace(/[\s.]/g, ''), 10)
+    confidence.budget = 0.9
+  } else if (amounts.length) {
+    property.price = amounts[0]
+    confidence.budget = 0.8
+  }
+
+  if (/\bterrasse\b/i.test(text)) property.terrace = true
+  if (/\bbalcon\b/i.test(text)) property.balcony = true
+  if (/\bparking\b/i.test(text)) property.parking = true
+  if (/\bascenseur\b/i.test(text)) property.elevator = true
+  if (/\bvue\b/i.test(text)) property.view = true
+
+  let status: PropertyStatus = 'disponible'
+  if (/\bvendu\b/i.test(text)) status = 'vendu'
+  else if (/\bcompromis\b/i.test(text)) status = 'compromis'
+  else if (/\boption\b/i.test(text)) status = 'option'
+  else if (/\bretir/i.test(text)) status = 'retire'
+  property.status = status
+  confidence.status = 0.7
+
+  const descStart = text.match(/(?:description|atouts|bon état|visite)[:\s]/i)
+  if (descStart || text.length > 80) {
+    property.description = text.length > 400 ? `${text.slice(0, 397)}…` : text
+    confidence.description = 0.5
+  }
+
+  return { rawText: text, confidence, property }
 }

@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { ArrowLeft } from 'lucide-react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
+import { PageBackLink } from '../components/ui/PageBackLink'
 import { SearchCriteriaForm } from '../components/forms/SearchCriteriaForm'
 import { PageHeader } from '../components/ui/PageHeader'
 import { SmartField } from '../components/ui/SmartField'
@@ -46,7 +46,7 @@ export function SearchEdit() {
 
   return (
     <div className="space-y-5 nemea-page nemea-page--narrow">
-      <Link to={`/recherches/${search.id}`} className="btn-ghost !px-0 !border-0 !bg-transparent"><ArrowLeft size={16} /> Retour</Link>
+      <PageBackLink to={`/recherches/${search.id}`} label="Retour à la fiche" />
       <PageHeader eyebrow="Modifier" title={search.label} />
 
       <form onSubmit={handleSubmit} className="space-y-5">
