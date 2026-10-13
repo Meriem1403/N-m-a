@@ -1,6 +1,6 @@
 import { parsePropertyImportText } from './parser'
 import { compressImageFile, isDataUrlWithinLimit } from './imageCompress'
-import { extractPhotosFromPdf, extractTextFromPdf } from './pdfPropertyImport'
+import { parsePdfPropertyDocument } from './pdfPropertyImport'
 import type { ParsedPropertyDraft } from '../types'
 
 export function friendlyPropertyImportError(err: unknown): string {
@@ -13,6 +13,9 @@ export function friendlyPropertyImportError(err: unknown): string {
   }
   if (/Invalid PDF|Missing PDF/i.test(msg)) {
     return 'Fichier PDF illisible ou protégé. Exportez la brochure en PDF standard ou collez le texte de l’annonce.'
+  }
+  if (/ArrayBuffer.*detached|already detached/i.test(msg)) {
+    return 'Lecture PDF interrompue. Réessayez une fois ; si besoin, rechargez la page puis réimportez le fichier.'
   }
   return msg || 'Import impossible.'
 }
@@ -56,10 +59,7 @@ export async function importPropertyFromFile(file: File): Promise<PropertyDocume
 
   if (isPdf) {
     const buffer = await file.arrayBuffer()
-    const [text, pdfPhotos] = await Promise.all([
-      extractTextFromPdf(buffer),
-      extractPhotosFromPdf(buffer, 3),
-    ])
+    const { text, photos: pdfPhotos } = await parsePdfPropertyDocument(buffer, 3)
     if (!text.trim()) {
       throw new Error('Aucun texte lisible dans ce PDF (scan ou image). Collez le texte de l’annonce ou utilisez un PDF généré (brochure agence).')
     }

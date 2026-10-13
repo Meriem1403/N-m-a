@@ -9,14 +9,24 @@ function ensurePdfWorker(): void {
   workerReady = true
 }
 
-async function loadPdf(data: ArrayBuffer): Promise<PDFDocumentProxy> {
-  ensurePdfWorker()
-  return getDocument({ data: new Uint8Array(data), useSystemFonts: true }).promise
+function clonePdfBytes(data: ArrayBuffer | Uint8Array): Uint8Array {
+  return data instanceof Uint8Array ? data.slice() : new Uint8Array(data).slice()
 }
 
-export async function extractTextFromPdf(data: ArrayBuffer): Promise<string> {
+async function loadPdf(data: ArrayBuffer | Uint8Array): Promise<PDFDocumentProxy> {
+  ensurePdfWorker()
+  return getDocument({ data: clonePdfBytes(data), useSystemFonts: true }).promise
+}
+
+/** Une seule ouverture du PDF (évite ArrayBuffer detached si texte + photos en parallèle). */
+export async function parsePdfPropertyDocument(
+  data: ArrayBuffer,
+  maxPhotos = 3,
+): Promise<{ text: string; photos: string[] }> {
   const doc = await loadPdf(data)
   const parts: string[] = []
+  const collected: string[] = []
+
   for (let pageNum = 1; pageNum <= doc.numPages; pageNum++) {
     const page = await doc.getPage(pageNum)
     const content = await page.getTextContent()
@@ -24,8 +34,28 @@ export async function extractTextFromPdf(data: ArrayBuffer): Promise<string> {
       .map((item) => ('str' in item ? item.str : ''))
       .join(' ')
     parts.push(pageText)
+
+    if (collected.length < maxPhotos) {
+      const embedded = await extractEmbeddedPhotosFromPage(page)
+      for (const url of embedded) {
+        if (collected.length >= maxPhotos) break
+        if (!collected.includes(url)) collected.push(url)
+      }
+    }
   }
-  return parts.join('\n\n').replace(/\s+/g, ' ').trim()
+
+  if (collected.length === 0 && doc.numPages > 0) {
+    const page = await doc.getPage(1)
+    collected.push(await renderPagePreview(page))
+  }
+
+  const text = parts.join('\n\n').replace(/\s+/g, ' ').trim()
+  return { text, photos: collected.slice(0, maxPhotos) }
+}
+
+export async function extractTextFromPdf(data: ArrayBuffer): Promise<string> {
+  const { text } = await parsePdfPropertyDocument(data, 0)
+  return text
 }
 
 type PdfImageBitmap = {
@@ -97,22 +127,6 @@ async function renderPagePreview(page: PDFPageProxy, scale = 1.35): Promise<stri
 }
 
 export async function extractPhotosFromPdf(data: ArrayBuffer, maxPhotos = 3): Promise<string[]> {
-  const doc = await loadPdf(data)
-  const collected: string[] = []
-
-  for (let pageNum = 1; pageNum <= doc.numPages && collected.length < maxPhotos; pageNum++) {
-    const page = await doc.getPage(pageNum)
-    const embedded = await extractEmbeddedPhotosFromPage(page)
-    for (const url of embedded) {
-      if (collected.length >= maxPhotos) break
-      if (!collected.includes(url)) collected.push(url)
-    }
-  }
-
-  if (collected.length === 0 && doc.numPages > 0) {
-    const page = await doc.getPage(1)
-    collected.push(await renderPagePreview(page))
-  }
-
-  return collected.slice(0, maxPhotos)
+  const { photos } = await parsePdfPropertyDocument(data, maxPhotos)
+  return photos
 }
