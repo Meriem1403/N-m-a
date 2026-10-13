@@ -326,14 +326,47 @@ function isAgencyBrochureText(text: string): boolean {
   )
 }
 
-function parseBrochurePrestations(normalized: string): Partial<ParsedPropertyDraft> {
-  const section = normalized.match(/Prestations\s+(.+?)\s+Proximités/i)?.[1] ?? ''
-  if (!section) return {}
+function listingMentionsFeature(text: string, keywords: string[]): boolean {
+  if (!text.trim()) return false
+  for (const keyword of keywords) {
+    const re = new RegExp(`\\b${escapeRegex(keyword)}`, 'i')
+    if (!re.test(text)) continue
+    const neg = new RegExp(
+      `(sans|pas de|aucun|non)\\s+(?:[\\wàâäéèêëïîôùûüç-]+\\s+){0,4}${escapeRegex(keyword)}`,
+      'i',
+    )
+    if (neg.test(text)) continue
+    return true
+  }
+  return false
+}
+
+/** Équipements annonce / brochure (prestations, description, surfaces — pas « parking public » seul). */
+function parseListingEquipment(normalized: string): Partial<ParsedPropertyDraft> {
+  const prestations = normalized.match(/Prestations\s+(.+?)\s+Proximités/is)?.[1]?.trim() ?? ''
+  const description = normalized.match(/€\s+(.+?)\s+Surfaces\s/is)?.[1]?.trim() ?? ''
+  const surfaces = normalized.match(/Surfaces\s+(.+?)\s+Prestations/is)?.[1]?.trim() ?? ''
+  const titleBlock = normalized.match(
+    /(?:\.com|estate\s*\d+)\s+([A-ZÀÁÂÄÉÈÊËÏÎÔÖÙÛÜÇ0-9][^€]{8,}?)\s+\d[\d\s.]*\s*€/i,
+  )?.[1] ?? ''
+
+  const propertyText = [titleBlock, description, surfaces, prestations].filter(Boolean).join(' ')
   const flags: Partial<ParsedPropertyDraft> = {}
-  if (/\bterrasse\b/i.test(section)) flags.terrace = true
-  if (/\bbalcon\b/i.test(section)) flags.balcony = true
-  if (/\bascenseur\b/i.test(section)) flags.elevator = true
-  if (/\bparking\b/i.test(section) && !/parking\s+public/i.test(section)) flags.parking = true
+
+  if (listingMentionsFeature(propertyText, ['terrasse', 'patio'])) flags.terrace = true
+  if (listingMentionsFeature(propertyText, ['balcon', 'loggia', 'varangue'])) flags.balcony = true
+  if (listingMentionsFeature(prestations + ' ' + description, ['ascenseur', 'lift'])) flags.elevator = true
+
+  const parkingHaystack = `${prestations} ${description} ${surfaces}`
+  if (
+    listingMentionsFeature(parkingHaystack, ['parking', 'stationnement', 'box'])
+    && !/parking\s+public/i.test(parkingHaystack)
+  ) {
+    flags.parking = true
+  }
+
+  if (listingMentionsFeature(propertyText, ['garage'])) flags.parking = true
+
   return flags
 }
 
@@ -415,7 +448,7 @@ function parseAgencyBrochure(text: string): ParsedPropertyDraft {
     property.view = true
   }
 
-  Object.assign(property, parseBrochurePrestations(normalized))
+  Object.assign(property, parseListingEquipment(normalized))
 
   const descMatch = normalized.match(/€\s+(.+?)\s+Surfaces\s/i)
   const descParts: string[] = []
@@ -543,10 +576,7 @@ export function parsePropertyImportText(
   }
 
   if (!agencyBrochure) {
-    if (/\bterrasse\b/i.test(text)) property.terrace = true
-    if (/\bbalcon\b/i.test(text)) property.balcony = true
-    if (/\bparking\b/i.test(text) && !/parking\s+public/i.test(text)) property.parking = true
-    if (/\bascenseur\b/i.test(text)) property.elevator = true
+    Object.assign(property, parseListingEquipment(text.replace(/\s+/g, ' ').trim()))
     if (/\bvue\b/i.test(text) && !/centre\s+ville/i.test(text)) property.view = true
   }
 
