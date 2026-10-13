@@ -1,6 +1,7 @@
 import { useCallback, useId, useRef, useState } from 'react'
 import { ChevronDown, FileUp, Loader2 } from 'lucide-react'
 import { parsePropertyImportText } from '../../lib/parser'
+import { hardRefreshApp } from '../../lib/appCache'
 import {
   friendlyPropertyImportError,
   importPropertyFromFile,
@@ -32,6 +33,7 @@ export function PropertyPasteImport({ onApply }: PropertyPasteImportProps) {
   const [dragOver, setDragOver] = useState(false)
   const [loading, setLoading] = useState(false)
   const [showTextFallback, setShowTextFallback] = useState(false)
+  const [needsAppRefresh, setNeedsAppRefresh] = useState(false)
   const fileInputId = useId()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -81,7 +83,11 @@ export function PropertyPasteImport({ onApply }: PropertyPasteImportProps) {
           `Import « ${file.name} » — champs préremplis.${photoNote} Vérifiez avant enregistrement.`,
         )
       } catch (err) {
-        setHint(friendlyPropertyImportError(err))
+        const msg = friendlyPropertyImportError(err)
+        setHint(msg)
+        setNeedsAppRefresh(/Failed to fetch dynamically imported module|Importing a module script failed|Loading chunk/i.test(
+          err instanceof Error ? err.message : String(err),
+        ))
       } finally {
         setLoading(false)
       }
@@ -210,9 +216,18 @@ export function PropertyPasteImport({ onApply }: PropertyPasteImportProps) {
       )}
 
       {hint && (
-        <p className="text-xs sm:text-sm text-indigo-200/90" role="status">
-          {hint}
-        </p>
+        <div className="space-y-2" role="status">
+          <p className="text-xs sm:text-sm text-indigo-200/90">{hint}</p>
+          {needsAppRefresh && (
+            <button
+              type="button"
+              className="btn-primary !rounded-xl text-sm"
+              onClick={() => void hardRefreshApp()}
+            >
+              Mettre à jour l’application et réessayer
+            </button>
+          )}
+        </div>
       )}
     </section>
   )

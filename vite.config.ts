@@ -4,6 +4,16 @@ import { defineConfig } from 'vite'
 import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
+  define: {
+    __NEMEA_BUILD_ID__: JSON.stringify('2026-03-26-pdf-inline-v1'),
+  },
+  build: {
+    rolldownOptions: {
+      output: {
+        codeSplitting: false,
+      },
+    },
+  },
   plugins: [
     react(),
     tailwindcss(),
@@ -43,6 +53,18 @@ export default defineConfig({
         cleanupOutdatedCaches: true,
         clientsClaim: true,
         skipWaiting: true,
+        runtimeCaching: [
+          {
+            urlPattern: ({ request, url }) =>
+              request.destination === 'script' || url.pathname.startsWith('/assets/'),
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'nemea-assets',
+              networkTimeoutSeconds: 8,
+              expiration: { maxEntries: 64, maxAgeSeconds: 60 * 60 * 24 * 7 },
+            },
+          },
+        ],
       },
     }),
   ],
