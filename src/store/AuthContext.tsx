@@ -33,22 +33,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     supabase.auth.getSession().then(({ data }) => {
       if (cancelled) return
       setSession(data.session)
-      stripAuthTokensFromUrl()
+      if (data.session) stripAuthTokensFromUrl()
       setAuthReady(true)
     })
 
     const { data: sub } = supabase.auth.onAuthStateChange((event, nextSession) => {
       if (event === 'PASSWORD_RECOVERY') setPasswordRecovery(true)
-      if (
-        event === 'SIGNED_IN'
-        || event === 'SIGNED_OUT'
-        || event === 'PASSWORD_RECOVERY'
-        || event === 'INITIAL_SESSION'
-        || event === 'TOKEN_REFRESHED'
-      ) {
+      setSession(nextSession)
+      if (nextSession && event !== 'SIGNED_OUT') {
         stripAuthTokensFromUrl()
       }
-      setSession(nextSession)
       setAuthReady(true)
     })
 

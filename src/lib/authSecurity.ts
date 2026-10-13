@@ -1,4 +1,4 @@
-/** Supprime tokens OAuth / recovery de l’URL (ne jamais partager un lien contenant ces paramètres). */
+/** Supprime tokens OAuth / recovery de l’URL une fois la session établie côté client. */
 export function stripAuthTokensFromUrl(): void {
   if (typeof window === 'undefined') return
 
@@ -17,15 +17,23 @@ export function stripAuthTokensFromUrl(): void {
     'code',
   ]
 
-  let dirty = /type=recovery|type=magiclink/i.test(hashBody)
-  for (const key of sensitive) {
-    if (hashParams.has(key) || searchParams.has(key)) dirty = true
-  }
+  const hasHashTokens = sensitive.some((key) => hashParams.has(key))
+  const hasSearchCode = searchParams.has('code')
 
-  if (!dirty) return
+  if (!hasHashTokens && !hasSearchCode) return
 
   for (const key of sensitive) searchParams.delete(key)
   const nextSearch = searchParams.toString()
-  const nextUrl = pathname + (nextSearch ? `?${nextSearch}` : '')
-  window.history.replaceState(null, '', nextUrl)
+  const nextPath = pathname + (nextSearch ? `?${nextSearch}` : '')
+  window.history.replaceState(null, '', nextPath)
+}
+
+/** True si l’URL ressemble à un lien Supabase (recovery, magic link, PKCE). */
+export function urlLooksLikeAuthCallback(): boolean {
+  if (typeof window === 'undefined') return false
+  const { search, hash } = window.location
+  const hashBody = hash.startsWith('#') ? hash.slice(1) : hash
+  if (/type=recovery|type=magiclink|access_token=/i.test(hashBody)) return true
+  if (new URLSearchParams(search).has('code')) return true
+  return false
 }
