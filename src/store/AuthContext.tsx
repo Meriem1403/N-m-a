@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import type { Session } from '@supabase/supabase-js'
+import { stripAuthTokensFromUrl } from '../lib/authSecurity'
 import { isSupabaseConfigured, supabase } from '../lib/supabase'
 
 interface AuthContextValue {
@@ -32,11 +33,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     supabase.auth.getSession().then(({ data }) => {
       if (cancelled) return
       setSession(data.session)
+      stripAuthTokensFromUrl()
       setAuthReady(true)
     })
 
     const { data: sub } = supabase.auth.onAuthStateChange((event, nextSession) => {
       if (event === 'PASSWORD_RECOVERY') setPasswordRecovery(true)
+      if (
+        event === 'SIGNED_IN'
+        || event === 'SIGNED_OUT'
+        || event === 'PASSWORD_RECOVERY'
+        || event === 'INITIAL_SESSION'
+        || event === 'TOKEN_REFRESHED'
+      ) {
+        stripAuthTokensFromUrl()
+      }
       setSession(nextSession)
       setAuthReady(true)
     })
@@ -58,8 +69,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = useCallback(async () => {
     if (!supabase) return
-    await supabase.auth.signOut()
+    await supabase.auth.signOut({ scope: 'global' })
+    setSession(null)
     setPasswordRecovery(false)
+    stripAuthTokensFromUrl()
   }, [])
 
   const requestPasswordReset = useCallback(async (email: string) => {

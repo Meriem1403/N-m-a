@@ -23,6 +23,8 @@ import { History } from './pages/History'
 import { Import } from './pages/Import'
 import { IntakeHub } from './pages/IntakeHub'
 import { NotFound } from './pages/NotFound'
+import { ProductionConfigRequired } from './pages/ProductionConfigRequired'
+import { isSupabaseConfigured } from './lib/supabase'
 
 function AppRoutes() {
   const { requiresAuth, authReady, session, passwordRecovery } = useAuth()
@@ -106,6 +108,10 @@ function AuthenticatedShell() {
 }
 
 export default function App() {
+  if (import.meta.env.PROD && !isSupabaseConfigured()) {
+    return <ProductionConfigRequired />
+  }
+
   return (
     <BrowserRouter>
       <Routes>

@@ -150,6 +150,14 @@ Les évolutions récentes de l’app (localisation PACA, import profil/bien, pho
 |-------|-------------|--------|
 | 1 | [`supabase/apply_updates.sql`](./supabase/apply_updates.sql) | Formulaires client, liens `/f/…` |
 | 2 | [`supabase/secure_rls.sql`](./supabase/secure_rls.sql) | Uniquement si accès anonyme aux tables CRM (anciennes policies `demo_*`) |
+| 3 | [`supabase/harden_anon_rls.sql`](./supabase/harden_anon_rls.sql) | **Recommandé en prod** — révoque l’accès `anon` aux profils/biens/recherches |
+
+### Sécurité session (important)
+
+- **Ne partagez jamais** une URL contenant `#access_token=…` ou `?code=…` (lien e-mail Supabase). Ces liens connectent quiconque les ouvre.
+- L’app **efface ces paramètres** après connexion ; copiez seulement l’adresse du site (`https://votre-site.netlify.app/…` sans hash).
+- Par défaut la session est stockée en **sessionStorage** (déconnexion à la fermeture du navigateur). Pour persister : `VITE_AUTH_STORAGE=local` sur Netlify.
+- Désactivez les **inscriptions publiques** Supabase (Auth → Providers → Email) et créez les comptes à la main.
 
 Puis **Deploy** sur Netlify (ou rebuild Docker) pour servir le nouveau front.
 
