@@ -1,6 +1,10 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { demoProfiles, demoProperties, demoSearches } from '../data/demo'
-import { matchPropertyToAllSearches, matchPropertyToSearch } from '../lib/matching'
+import {
+  MIN_SEARCH_MATCH_SCORE,
+  matchPropertyToAllSearches,
+  matchPropertyToSearch,
+} from '../lib/matching'
 import { formatSupabaseError } from '../lib/supabaseErrors'
 import { isSupabaseConfigured } from '../lib/supabase'
 import { useAuth } from './AuthContext'
@@ -396,7 +400,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       return properties
         .filter((p) => p.status === 'disponible')
         .map((property) => ({ property, match: matchPropertyToSearch(property, search, profile) }))
-        .filter(({ match }) => match.score >= 40)
+        .filter(({ match }) => match.score >= MIN_SEARCH_MATCH_SCORE)
         .sort((a, b) => b.match.score - a.match.score)
     },
     [properties, searches, profiles],

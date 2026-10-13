@@ -285,7 +285,136 @@ function parseMarseilleDistrict(text: string): string | undefined {
 
 function parsePropertyType(text: string): PropertyType | undefined {
   const m = text.match(/\b(studio|T[1-5](?:\+)?|maison|loft)\b/i)
-  return m ? (m[1].toUpperCase() as PropertyType) : undefined
+  return m ? (normalizePropertyTypeToken(m[1]) ?? undefined) : undefined
+}
+
+function normalizePropertyTypeToken(token: string): PropertyType | undefined {
+  const t = token.toLowerCase()
+  if (t === 'studio') return 'studio'
+  if (t === 'maison') return 'maison'
+  if (t === 'loft') return 'loft'
+  const upper = token.toUpperCase()
+  if (upper === 'T5+') return 'T5+'
+  if (/^T[1-4]$/.test(upper)) return upper as PropertyType
+  return undefined
+}
+
+function inferTypeFromRooms(rooms: number): PropertyType | undefined {
+  if (rooms <= 1) return 'studio'
+  if (rooms === 2) return 'T2'
+  if (rooms === 3) return 'T3'
+  if (rooms === 4) return 'T4'
+  if (rooms >= 5) return 'T5+'
+  return undefined
+}
+
+function referenceFromFileName(fileName: string): string | undefined {
+  const base = fileName.replace(/\.[^.]+$/, '')
+  const brochure = base.match(/brochure[_-]?(\d+)/i)
+  if (brochure) return `REF-${brochure[1]}`
+  const digits = base.match(/(\d{5,})/)
+  if (digits) return `REF-${digits[1]}`
+  return undefined
+}
+
+/** Brochures agence (Estate 919, TCPDF, etc.) avec blocs « Informations » structurés. */
+function isAgencyBrochureText(text: string): boolean {
+  return (
+    /Powered by TCPDF/i.test(text) ||
+    (/Référence\s+\S+/i.test(text) && /Ville\s+/i.test(text) && /Pièces\s+\d+/i.test(text)) ||
+    /Loi Carrez/i.test(text)
+  )
+}
+
+function parseAgencyBrochure(text: string): ParsedPropertyDraft {
+  const property: ParsedPropertyDraft = {}
+  const normalized = text.replace(/\s+/g, ' ').trim()
+
+  const infoBlock = normalized.match(
+    /Informations\s+Référence\s+(\S+)\s+Ville\s+(.+?)\s+Pièces\s+(\d+)/i,
+  )
+  if (infoBlock) {
+    property.reference = infoBlock[1].toUpperCase()
+    property.rooms = parseInt(infoBlock[3], 10)
+    const villeRaw = infoBlock[2].trim()
+    const marseille = villeRaw.match(/Marseille\s*(\d{1,2})(?:er|e)?/i)
+    if (marseille) {
+      property.city = 'Marseille'
+      property.district = `${marseille[1]}e arrondissement`
+    } else {
+      const city = parsePacaCity(villeRaw) ?? parsePacaCity(normalized)
+      if (city) property.city = city
+    }
+  } else {
+    const refMatch = normalized.match(/Référence\s+(\S+)/i)
+    if (refMatch) property.reference = refMatch[1].toUpperCase()
+  }
+
+  const carrez = normalized.match(/(?:Loi Carrez|«Loi Carrez»)\s*[:.]?\s*(\d+(?:[.,]\d+)?)\s*(?:m²|m2)/i)
+  if (carrez) {
+    property.surface = Math.round(parseFloat(carrez[1].replace(',', '.')))
+  } else {
+    const total = normalized.match(/Surface totale\s+(\d+(?:[.,]\d+)?)\s*(?:m²|m2)/i)
+    if (total) property.surface = Math.round(parseFloat(total[1].replace(',', '.')))
+  }
+
+  const titleBeforePrice = normalized.match(
+    /(?:\.com|estate\s*\d+)\s+([A-ZÀÁÂÄÉÈÊËÏÎÔÖÙÛÜÇ0-9][A-ZÀÁÂÄÉÈÊËÏÎÔÖÙÛÜÇ0-9\s–—-]{8,}?)\s+(\d[\d\s.]{2,})\s*€/i,
+  )
+  if (titleBeforePrice) {
+    const titleType = parsePropertyType(titleBeforePrice[1])
+    if (titleType) property.type = titleType
+    const price = parseInt(titleBeforePrice[2].replace(/[\s.]/g, ''), 10)
+    if (!Number.isNaN(price)) property.price = price
+  }
+
+  if (property.price == null) {
+    const amounts = parseEuroAmounts(normalized).filter((n) => n >= 20_000 && n <= 50_000_000)
+    if (amounts.length) property.price = amounts[0]
+  }
+
+  if (!property.type) {
+    property.type = parsePropertyType(normalized)
+  }
+  if (!property.type && property.rooms != null) {
+    property.type = inferTypeFromRooms(property.rooms)
+  }
+
+  if (!property.city) {
+    const city = parsePacaCity(normalized)
+    if (city) property.city = city
+  }
+  if (!property.district) {
+    property.district = parseMarseilleDistrict(normalized)
+  }
+
+  const vueInfo = normalized.match(/Vue\s+([^D]+?)(?:\s+Diagnostics|\s+CLASSE|$)/i)
+  if (vueInfo && !/sans\s+vue/i.test(vueInfo[1])) {
+    property.view = true
+  }
+
+  const descMatch = normalized.match(/€\s+(.+?)\s+Surfaces\s/i)
+  if (descMatch) {
+    property.description = descMatch[1].replace(/\s+/g, ' ').trim().slice(0, 2000)
+  }
+
+  property.status = 'disponible'
+  return property
+}
+
+function mergePropertyDrafts(primary: ParsedPropertyDraft, fallback: ParsedPropertyDraft): ParsedPropertyDraft {
+  const keys = [
+    'reference', 'price', 'city', 'district', 'type', 'surface', 'rooms',
+    'terrace', 'balcony', 'parking', 'elevator', 'view', 'description', 'status', 'photos',
+  ] as const
+  const merged: ParsedPropertyDraft = { ...fallback }
+  for (const key of keys) {
+    const value = primary[key]
+    if (value !== undefined && value !== null && value !== '') {
+      merged[key] = value as never
+    }
+  }
+  return merged
 }
 
 function parseEuroAmounts(text: string): number[] {
@@ -317,10 +446,14 @@ function parseSurfaceSqm(text: string, mode: 'listing' | 'searchMin'): number | 
   return mode === 'listing' ? candidates[0] : candidates[candidates.length - 1]
 }
 
-export function parsePropertyImportText(rawText: string): ParsedPropertyImport {
+export function parsePropertyImportText(
+  rawText: string,
+  options?: { fileName?: string },
+): ParsedPropertyImport {
   const text = rawText.trim()
   const confidence: Record<string, number> = {}
   const property: ParsedPropertyDraft = {}
+  const agencyBrochure = isAgencyBrochureText(text)
 
   const refMatch = text.match(/\b((?:MAR|REF)-[\dA-Z-]+)\b/i)
     ?? text.match(/réf(?:érence)?\.?\s*[:.]?\s*([A-Z0-9-]+)/i)
@@ -384,10 +517,21 @@ export function parsePropertyImportText(rawText: string): ParsedPropertyImport {
   confidence.status = 0.7
 
   const descStart = text.match(/(?:description|atouts|bon état|visite)[:\s]/i)
-  if (descStart || text.length > 80) {
+  if (!agencyBrochure && (descStart || text.length > 80)) {
     property.description = text.length > 400 ? `${text.slice(0, 397)}…` : text
     confidence.description = 0.5
   }
 
-  return { rawText: text, confidence, property }
+  let finalProperty = property
+  if (agencyBrochure) {
+    finalProperty = mergePropertyDrafts(parseAgencyBrochure(text), property)
+    confidence.brochure = 0.95
+  }
+
+  if (!finalProperty.reference && options?.fileName) {
+    const fromFile = referenceFromFileName(options.fileName)
+    if (fromFile) finalProperty.reference = fromFile
+  }
+
+  return { rawText: text, confidence, property: finalProperty }
 }

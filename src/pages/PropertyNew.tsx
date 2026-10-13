@@ -54,6 +54,9 @@ export function PropertyNew() {
     if (draft.parking) setParking(true)
     if (draft.elevator) setElevator(true)
     if (draft.view) setView(true)
+    if (draft.photos?.length) {
+      setPhotos((prev) => [...prev, ...draft.photos!].slice(0, 8))
+    }
   }
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -80,7 +83,7 @@ export function PropertyNew() {
         variant="property"
         badge="Nouveau bien"
         title="Ajouter un bien immobilier"
-        subtitle="Collez une annonce pour préremplir, ou saisissez à la main. Les correspondances utilisent surface et équipements."
+        subtitle="Importez une brochure PDF ou collez une annonce pour préremplir, puis complétez si besoin."
       />
 
       <PropertyPasteImport onApply={applyFromPaste} />

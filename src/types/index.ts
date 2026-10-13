@@ -174,6 +174,7 @@ export interface ParsedPropertyDraft {
   view?: boolean
   description?: string
   status?: PropertyStatus
+  photos?: string[]
 }
 
 export interface ParsedImport {
