@@ -326,6 +326,17 @@ function isAgencyBrochureText(text: string): boolean {
   )
 }
 
+function parseBrochurePrestations(normalized: string): Partial<ParsedPropertyDraft> {
+  const section = normalized.match(/Prestations\s+(.+?)\s+Proximités/i)?.[1] ?? ''
+  if (!section) return {}
+  const flags: Partial<ParsedPropertyDraft> = {}
+  if (/\bterrasse\b/i.test(section)) flags.terrace = true
+  if (/\bbalcon\b/i.test(section)) flags.balcony = true
+  if (/\bascenseur\b/i.test(section)) flags.elevator = true
+  if (/\bparking\b/i.test(section) && !/parking\s+public/i.test(section)) flags.parking = true
+  return flags
+}
+
 function parseAgencyBrochure(text: string): ParsedPropertyDraft {
   const property: ParsedPropertyDraft = {}
   const normalized = text.replace(/\s+/g, ' ').trim()
@@ -369,12 +380,22 @@ function parseAgencyBrochure(text: string): ParsedPropertyDraft {
   }
 
   if (property.price == null) {
+    const salePrice = normalized.match(/(\d{2,3}(?:\s\d{3})+)\s*€/)
+    if (salePrice) {
+      property.price = parseInt(salePrice[1].replace(/\s/g, ''), 10)
+    }
+  }
+
+  if (property.price == null) {
     const amounts = parseEuroAmounts(normalized).filter((n) => n >= 20_000 && n <= 50_000_000)
     if (amounts.length) property.price = amounts[0]
   }
 
   if (!property.type) {
     property.type = parsePropertyType(normalized)
+  }
+  if (!property.type && /\bSTUDIO\b/i.test(normalized)) {
+    property.type = 'studio'
   }
   if (!property.type && property.rooms != null) {
     property.type = inferTypeFromRooms(property.rooms)
@@ -388,14 +409,33 @@ function parseAgencyBrochure(text: string): ParsedPropertyDraft {
     property.district = parseMarseilleDistrict(normalized)
   }
 
-  const vueInfo = normalized.match(/Vue\s+([^D]+?)(?:\s+Diagnostics|\s+CLASSE|$)/i)
+  const vueInfo = normalized.match(/Informations[\s\S]*?Vue\s+([^D]+?)(?:\s+Diagnostics|\s+CLASSE|$)/i)
+    ?? normalized.match(/Vue\s+([^D]+?)(?:\s+Diagnostics|\s+CLASSE|$)/i)
   if (vueInfo && !/sans\s+vue/i.test(vueInfo[1])) {
     property.view = true
   }
 
+  Object.assign(property, parseBrochurePrestations(normalized))
+
   const descMatch = normalized.match(/€\s+(.+?)\s+Surfaces\s/i)
+  const descParts: string[] = []
   if (descMatch) {
-    property.description = descMatch[1].replace(/\s+/g, ' ').trim().slice(0, 2000)
+    descParts.push(descMatch[1].replace(/\s+/g, ' ').trim())
+  }
+  const address = normalized.match(/(?:Idéalement situé|situé)\s+([^,]+(?:,\s*[^.]+)?)/i)
+  if (address) descParts.unshift(`Adresse : ${address[1].trim()}`)
+  const floor = normalized.match(/Étage\s+(\S+)/i)
+  const etat = normalized.match(/État\s+(\S+)/i)
+  const dpe = normalized.match(/Classe énergie\s+\d+\s*kWh\/m²\.an\s*\(([A-G])\)/i)
+  const meta: string[] = []
+  if (floor) meta.push(`Étage ${floor[1]}`)
+  if (etat) meta.push(`État ${etat[1]}`)
+  if (dpe) meta.push(`DPE ${dpe[1]}`)
+  const surfaceTotale = normalized.match(/Surface totale\s+(\d+(?:[.,]\d+)?)\s*m²/i)
+  if (surfaceTotale) meta.push(`Surface totale ${surfaceTotale[1]} m²`)
+  if (meta.length) descParts.push(meta.join(' · '))
+  if (descParts.length) {
+    property.description = descParts.join('\n\n').slice(0, 2000)
   }
 
   property.status = 'disponible'
@@ -502,11 +542,13 @@ export function parsePropertyImportText(
     confidence.budget = 0.8
   }
 
-  if (/\bterrasse\b/i.test(text)) property.terrace = true
-  if (/\bbalcon\b/i.test(text)) property.balcony = true
-  if (/\bparking\b/i.test(text)) property.parking = true
-  if (/\bascenseur\b/i.test(text)) property.elevator = true
-  if (/\bvue\b/i.test(text)) property.view = true
+  if (!agencyBrochure) {
+    if (/\bterrasse\b/i.test(text)) property.terrace = true
+    if (/\bbalcon\b/i.test(text)) property.balcony = true
+    if (/\bparking\b/i.test(text) && !/parking\s+public/i.test(text)) property.parking = true
+    if (/\bascenseur\b/i.test(text)) property.elevator = true
+    if (/\bvue\b/i.test(text) && !/centre\s+ville/i.test(text)) property.view = true
+  }
 
   let status: PropertyStatus = 'disponible'
   if (/\bvendu\b/i.test(text)) status = 'vendu'

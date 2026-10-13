@@ -1,6 +1,21 @@
 import { parsePropertyImportText } from './parser'
 import { compressImageFile, isDataUrlWithinLimit } from './imageCompress'
+import { extractPhotosFromPdf, extractTextFromPdf } from './pdfPropertyImport'
 import type { ParsedPropertyDraft } from '../types'
+
+export function friendlyPropertyImportError(err: unknown): string {
+  const msg = err instanceof Error ? err.message : String(err)
+  if (/Failed to fetch dynamically imported module|Importing a module script failed|Loading chunk/i.test(msg)) {
+    return 'L’application doit être rechargée (nouvelle version). Actualisez la page (Cmd+Shift+R ou tirez pour rafraîchir), puis réimportez le PDF.'
+  }
+  if (/pdf\.worker|GlobalWorkerOptions/i.test(msg)) {
+    return 'Lecteur PDF indisponible. Rechargez la page ; si le problème persiste, réessayez depuis Chrome/Safari (pas un onglet trop ancien).'
+  }
+  if (/Invalid PDF|Missing PDF/i.test(msg)) {
+    return 'Fichier PDF illisible ou protégé. Exportez la brochure en PDF standard ou collez le texte de l’annonce.'
+  }
+  return msg || 'Import impossible.'
+}
 
 export interface PropertyDocumentImportResult {
   sourceName: string
@@ -41,11 +56,13 @@ export async function importPropertyFromFile(file: File): Promise<PropertyDocume
 
   if (isPdf) {
     const buffer = await file.arrayBuffer()
-    const { extractPhotosFromPdf, extractTextFromPdf } = await import('./pdfPropertyImport')
     const [text, pdfPhotos] = await Promise.all([
       extractTextFromPdf(buffer),
       extractPhotosFromPdf(buffer, 3),
     ])
+    if (!text.trim()) {
+      throw new Error('Aucun texte lisible dans ce PDF (scan ou image). Collez le texte de l’annonce ou utilisez un PDF généré (brochure agence).')
+    }
     rawText = text
     photos = pdfPhotos.filter(isDataUrlWithinLimit)
   } else if (isText) {

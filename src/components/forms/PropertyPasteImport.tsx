@@ -1,7 +1,11 @@
 import { useCallback, useId, useRef, useState } from 'react'
 import { ChevronDown, FileUp, Loader2 } from 'lucide-react'
 import { parsePropertyImportText } from '../../lib/parser'
-import { importPropertyFromFile, isPropertyImportFile } from '../../lib/propertyDocumentImport'
+import {
+  friendlyPropertyImportError,
+  importPropertyFromFile,
+  isPropertyImportFile,
+} from '../../lib/propertyDocumentImport'
 import type { ParsedPropertyDraft } from '../../types'
 import { SmartTextarea } from '../ui/SmartTextarea'
 
@@ -77,7 +81,7 @@ export function PropertyPasteImport({ onApply }: PropertyPasteImportProps) {
           `Import « ${file.name} » — champs préremplis.${photoNote} Vérifiez avant enregistrement.`,
         )
       } catch (err) {
-        setHint(err instanceof Error ? err.message : 'Import impossible.')
+        setHint(friendlyPropertyImportError(err))
       } finally {
         setLoading(false)
       }
