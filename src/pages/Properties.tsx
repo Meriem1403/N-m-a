@@ -74,8 +74,11 @@ export function Properties() {
         title={`${disponibleCount} disponible${disponibleCount > 1 ? 's' : ''} sur ${properties.length}`}
         subtitle="Filtrez par statut ou recherchez par référence, quartier ou type."
         action={
-          <Link to="/biens/nouveau" className="btn-primary text-sm w-full sm:w-auto justify-center">
-            <Plus size={16} aria-hidden /> Nouveau bien
+          <Link
+            to="/biens/nouveau#import-brochure"
+            className="btn-primary text-sm w-full sm:w-auto justify-center"
+          >
+            <Plus size={16} aria-hidden /> Nouveau bien · PDF
           </Link>
         }
       />

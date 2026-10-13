@@ -1,5 +1,5 @@
 import { useCallback, useId, useRef, useState } from 'react'
-import { FileUp, Loader2, Sparkles } from 'lucide-react'
+import { ChevronDown, FileUp, Loader2 } from 'lucide-react'
 import { parsePropertyImportText } from '../../lib/parser'
 import { importPropertyFromFile, isPropertyImportFile } from '../../lib/propertyDocumentImport'
 import type { ParsedPropertyDraft } from '../../types'
@@ -27,6 +27,7 @@ export function PropertyPasteImport({ onApply }: PropertyPasteImportProps) {
   const [hint, setHint] = useState<string | null>(null)
   const [dragOver, setDragOver] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [showTextFallback, setShowTextFallback] = useState(false)
   const fileInputId = useId()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -91,15 +92,25 @@ export function PropertyPasteImport({ onApply }: PropertyPasteImportProps) {
     void handleFiles(e.dataTransfer.files)
   }
 
+  const openFilePicker = () => {
+    fileInputRef.current?.click()
+  }
+
   return (
-    <div className="nemea-panel property-paste-import space-y-3">
-      <div className="flex items-start gap-2">
-        <Sparkles size={18} className="text-indigo-300 shrink-0 mt-0.5" aria-hidden />
+    <section
+      id="import-brochure"
+      className="nemea-panel nemea-panel--glow property-paste-import space-y-4 scroll-mt-24"
+      aria-labelledby="property-import-title"
+    >
+      <div className="property-paste-import__head">
+        <span className="property-paste-import__step">Étape 1</span>
         <div>
-          <h2 className="text-sm font-semibold text-white">Import rapide</h2>
-          <p className="text-xs text-nemea-subtle mt-1 leading-relaxed">
-            Brochure PDF agence (modèle Estate 919 / TCPDF), texte d’annonce ou photo : glissez-déposez ou
-            choisissez un fichier — la fiche se remplit automatiquement.
+          <h2 id="property-import-title" className="text-base sm:text-lg font-semibold text-white">
+            Importer une brochure PDF
+          </h2>
+          <p className="text-xs sm:text-sm text-nemea-subtle mt-1 leading-relaxed max-w-xl">
+            Modèle agence (Estate 919, TCPDF…) : déposez le fichier ou choisissez-le — prix, surface, ville,
+            photos et description se remplissent automatiquement.
           </p>
         </div>
       </div>
@@ -122,23 +133,30 @@ export function PropertyPasteImport({ onApply }: PropertyPasteImportProps) {
         onDrop={onDrop}
       >
         {loading ? (
-          <Loader2 size={28} className="property-paste-import__drop-icon animate-spin" aria-hidden />
+          <Loader2 size={32} className="property-paste-import__drop-icon animate-spin" aria-hidden />
         ) : (
-          <FileUp size={28} className="property-paste-import__drop-icon" aria-hidden />
+          <FileUp size={32} className="property-paste-import__drop-icon" aria-hidden />
         )}
-        <p className="text-sm text-white font-medium">
-          {loading ? 'Analyse du document…' : 'Glisser un PDF brochure ou une image ici'}
+        <p className="text-sm sm:text-base text-white font-medium">
+          {loading ? 'Analyse du PDF en cours…' : 'Glisser-déposer votre PDF ici'}
         </p>
-        <p className="text-xs text-nemea-subtle mt-1">ou</p>
-        <label htmlFor={fileInputId} className="btn-ghost !text-indigo-300 text-sm mt-2 cursor-pointer">
-          Parcourir…
-        </label>
+        <p className="text-xs text-nemea-subtle mt-1 hidden sm:block">
+          Sur ordinateur · fichiers .pdf acceptés
+        </p>
+        <button
+          type="button"
+          className="btn-primary !rounded-xl text-sm mt-3"
+          onClick={openFilePicker}
+          disabled={loading}
+        >
+          Choisir un PDF ou une photo
+        </button>
         <input
           id={fileInputId}
           ref={fileInputRef}
           type="file"
           className="sr-only"
-          accept=".pdf,text/plain,image/*"
+          accept="application/pdf,.pdf,text/plain,image/*"
           onChange={(e) => {
             const files = e.target.files
             if (files?.length) void handleFiles(files)
@@ -147,32 +165,51 @@ export function PropertyPasteImport({ onApply }: PropertyPasteImportProps) {
         />
       </div>
 
-      <SmartTextarea
-        label="Texte extrait ou collé"
-        value={text}
-        onChange={setText}
-        placeholder="Ex. référence, type, ville, surface, prix… (rempli automatiquement après import PDF)"
-        minRows={4}
-        showStats
-      />
-      <div className="flex flex-wrap gap-2">
-        <button type="button" className="btn-primary !rounded-xl text-sm" onClick={analyzeText} disabled={loading}>
-          Remplir le formulaire
-        </button>
-        <button
-          type="button"
-          className="btn-ghost !text-indigo-300 text-sm"
-          onClick={() => setText(EXAMPLE)}
-          disabled={loading}
-        >
-          Exemple texte
-        </button>
-      </div>
+      <button
+        type="button"
+        className="property-paste-import__toggle"
+        onClick={() => setShowTextFallback((v) => !v)}
+        aria-expanded={showTextFallback}
+      >
+        <ChevronDown
+          size={16}
+          className={`property-paste-import__chevron${showTextFallback ? ' property-paste-import__chevron--open' : ''}`}
+          aria-hidden
+        />
+        Coller du texte d’annonce à la place
+      </button>
+
+      {showTextFallback && (
+        <div className="space-y-3 pt-1">
+          <SmartTextarea
+            label="Texte du bien"
+            value={text}
+            onChange={setText}
+            placeholder="Ex. référence, type, ville, surface, prix, équipements…"
+            minRows={4}
+            showStats
+          />
+          <div className="flex flex-wrap gap-2">
+            <button type="button" className="btn-primary !rounded-xl text-sm" onClick={analyzeText} disabled={loading}>
+              Remplir le formulaire
+            </button>
+            <button
+              type="button"
+              className="btn-ghost !text-indigo-300 text-sm"
+              onClick={() => setText(EXAMPLE)}
+              disabled={loading}
+            >
+              Exemple texte
+            </button>
+          </div>
+        </div>
+      )}
+
       {hint && (
-        <p className="text-xs text-nemea-muted" role="status">
+        <p className="text-xs sm:text-sm text-indigo-200/90" role="status">
           {hint}
         </p>
       )}
-    </div>
+    </section>
   )
 }

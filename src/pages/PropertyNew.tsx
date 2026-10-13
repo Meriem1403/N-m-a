@@ -79,14 +79,14 @@ export function PropertyNew() {
     <div className="space-y-5 nemea-page nemea-page--wide">
       <PageBackLink to="/biens" label="Biens" />
 
+      <PropertyPasteImport onApply={applyFromPaste} />
+
       <FormHero
         variant="property"
         badge="Nouveau bien"
         title="Ajouter un bien immobilier"
-        subtitle="Importez une brochure PDF ou collez une annonce pour préremplir, puis complétez si besoin."
+        subtitle="Après import PDF ou saisie manuelle, vérifiez les champs puis enregistrez."
       />
-
-      <PropertyPasteImport onApply={applyFromPaste} />
 
       <form onSubmit={handleSubmit} className="space-y-5">
         <FormSection icon={Home} title="Caractéristiques" description="Référence, prix et typologie — ou saisie manuelle" step={1}>
