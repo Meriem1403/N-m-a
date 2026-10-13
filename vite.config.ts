@@ -5,7 +5,7 @@ import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
   define: {
-    __NEMEA_BUILD_ID__: JSON.stringify('2026-03-26-pdf-single-load-v2'),
+    __NEMEA_BUILD_ID__: JSON.stringify('2026-03-26-pdf-photos-v3'),
   },
   build: {
     rolldownOptions: {

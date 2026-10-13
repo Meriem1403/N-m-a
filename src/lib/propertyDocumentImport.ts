@@ -1,5 +1,5 @@
 import { parsePropertyImportText } from './parser'
-import { compressImageFile, isDataUrlWithinLimit } from './imageCompress'
+import { compressDataUrl, compressImageFile, isDataUrlWithinLimit } from './imageCompress'
 import { parsePdfPropertyDocument } from './pdfPropertyImport'
 import type { ParsedPropertyDraft } from '../types'
 
@@ -64,7 +64,19 @@ export async function importPropertyFromFile(file: File): Promise<PropertyDocume
       throw new Error('Aucun texte lisible dans ce PDF (scan ou image). Collez le texte de l’annonce ou utilisez un PDF généré (brochure agence).')
     }
     rawText = text
-    photos = pdfPhotos.filter(isDataUrlWithinLimit)
+    photos = []
+    for (const url of pdfPhotos) {
+      if (isDataUrlWithinLimit(url)) {
+        photos.push(url)
+        continue
+      }
+      try {
+        const smaller = await compressDataUrl(url, 960, 0.75)
+        if (isDataUrlWithinLimit(smaller)) photos.push(smaller)
+      } catch {
+        /* skip oversized image */
+      }
+    }
   } else if (isText) {
     rawText = await readPlainText(file)
   } else if (isImage) {
