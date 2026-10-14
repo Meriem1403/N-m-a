@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { stripAuthTokensFromUrl } from '../lib/authSecurity'
+import { establishRecoverySession, redirectRecoveryCallbackToResetPage } from '../lib/recoverySession'
 import { isSupabaseConfigured, supabase } from '../lib/supabase'
 
 interface AuthContextValue {
@@ -27,15 +28,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!supabase) return
+    if (redirectRecoveryCallbackToResetPage()) return
 
     let cancelled = false
+    const onResetPage = window.location.pathname === '/reinitialiser-mot-de-passe'
 
-    supabase.auth.getSession().then(({ data }) => {
+    void (async () => {
+      if (onResetPage) {
+        await establishRecoverySession()
+      }
+      if (cancelled) return
+      const { data } = await supabase.auth.getSession()
       if (cancelled) return
       setSession(data.session)
       if (data.session) stripAuthTokensFromUrl()
       setAuthReady(true)
-    })
+    })()
 
     const { data: sub } = supabase.auth.onAuthStateChange((event, nextSession) => {
       if (event === 'PASSWORD_RECOVERY') setPasswordRecovery(true)

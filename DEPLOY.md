@@ -137,7 +137,10 @@ Tous les **comptes connectés** voient les **mêmes** profils, recherches et bie
 1. Sur la page de connexion : **Mot de passe oublié ?** → email → lien reçu par mail.
 2. Supabase → **Authentication** → **URL Configuration** :
    - **Site URL** : l’URL Netlify de l’app (ex. `https://votre-site.netlify.app`)
-   - **Redirect URLs** : ajouter `https://votre-site.netlify.app/reinitialiser-mot-de-passe` (et la même URL en `http://localhost:5173/...` pour le dev).
+   - **Redirect URLs** : ajouter **exactement**  
+     `https://oracle-nemea.netlify.app/reinitialiser-mot-de-passe`  
+     (et `http://localhost:5173/reinitialiser-mot-de-passe` pour le dev).  
+     Le lien e-mail Supabase doit pointer vers cette route, pas vers `/` seul.
 3. Sans accès au mail : **Authentication** → **Users** → ton utilisateur → **Send password recovery** ou définir un **nouveau mot de passe** manuellement (admin Supabase).
 
 ---

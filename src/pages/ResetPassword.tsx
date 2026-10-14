@@ -2,13 +2,16 @@ import { useEffect, useState } from 'react'
 import { KeyRound } from 'lucide-react'
 import { AmbientLayer } from '../components/layout/AmbientLayer'
 import { SmartField } from '../components/ui/SmartField'
-import { urlLooksLikeAuthCallback } from '../lib/authSecurity'
+import { redirectRecoveryCallbackToResetPage, establishRecoverySession } from '../lib/recoverySession'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../store/AuthContext'
 
 function friendlyAuthError(message: string): string {
   if (/auth session missing/i.test(message)) {
     return 'Lien expiré ou déjà utilisé. Demandez un nouveau mail « Mot de passe oublié » et ouvrez le lien tout de suite (une seule fois).'
+  }
+  if (/code challenge|verifier|invalid flow/i.test(message)) {
+    return 'Ouvrez le lien dans Chrome/Safari (pas un aperçu intégré au mail), ou redemandez un e-mail de réinitialisation.'
   }
   return message
 }
@@ -23,42 +26,61 @@ export function ResetPassword() {
   const [linkValidated, setLinkValidated] = useState(false)
 
   useEffect(() => {
-    if (!supabase) return
+    redirectRecoveryCallbackToResetPage()
+  }, [])
 
+  useEffect(() => {
+    if (!supabase) return
     let cancelled = false
 
-    const finishIfSession = (hasSession: boolean) => {
-      if (!cancelled && hasSession) setLinkValidated(true)
+    const finish = (ok: boolean, err?: string) => {
+      if (cancelled) return
+      if (ok) setLinkValidated(true)
+      if (err) setError(friendlyAuthError(err))
     }
 
-    supabase.auth.getSession().then(({ data }) => {
-      finishIfSession(Boolean(data.session))
-    })
-
-    const { data: sub } = supabase.auth.onAuthStateChange((event, nextSession) => {
+    const { data: authSub } = supabase.auth.onAuthStateChange((event, nextSession) => {
       if (event === 'PASSWORD_RECOVERY' || (nextSession && event === 'SIGNED_IN')) {
-        finishIfSession(true)
+        finish(true)
       }
     })
 
+    void (async () => {
+      const result = await establishRecoverySession()
+      if (cancelled) return
+      if (result?.ok) {
+        finish(true)
+        return
+      }
+      if (result && !result.ok) {
+        finish(false, result.error)
+      }
+    })()
+
     const timeout = window.setTimeout(() => {
-      if (cancelled || !supabase) return
-      supabase.auth.getSession().then(({ data }) => {
-        if (!data.session && urlLooksLikeAuthCallback()) {
-          setError(
-            'Impossible de valider le lien. Vérifiez l’URL de redirection dans Supabase (Authentication → URL Configuration) et redemandez un e-mail.',
+      if (cancelled || linkValidated) return
+      void establishRecoverySession().then((result) => {
+        if (cancelled) return
+        if (result?.ok) finish(true)
+        else if (!session && !linkValidated) {
+          finish(
+            false,
+            'Lien invalide ou expiré. Dans Supabase → Authentication → URL Configuration, ajoutez : https://oracle-nemea.netlify.app/reinitialiser-mot-de-passe puis redemandez un e-mail.',
           )
         }
-        finishIfSession(Boolean(data.session))
       })
-    }, 4000)
+    }, 6000)
 
     return () => {
       cancelled = true
-      sub.subscription.unsubscribe()
       clearTimeout(timeout)
+      authSub.subscription.unsubscribe()
     }
-  }, [])
+  }, [linkValidated, session])
+
+  useEffect(() => {
+    if (session) setLinkValidated(true)
+  }, [session])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

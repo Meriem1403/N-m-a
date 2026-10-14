@@ -5,7 +5,7 @@ import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
   define: {
-    __NEMEA_BUILD_ID__: JSON.stringify('2026-03-26-password-recovery-v6'),
+    __NEMEA_BUILD_ID__: JSON.stringify('2026-03-26-password-recovery-v8'),
   },
   build: {
     rolldownOptions: {

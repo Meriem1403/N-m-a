@@ -14,7 +14,8 @@ export const supabase =
   supabaseUrl && supabaseAnonKey
     ? createClient(supabaseUrl, supabaseAnonKey, {
         auth: {
-          flowType: 'pkce',
+          // implicit : liens e-mail recovery (#access_token) fiables depuis le navigateur du mail
+          flowType: 'implicit',
           detectSessionInUrl: true,
           persistSession: true,
           autoRefreshToken: true,

@@ -15,14 +15,17 @@ export function stripAuthTokensFromUrl(): void {
     'expires_in',
     'token_type',
     'code',
+    'token_hash',
+    'type',
   ]
 
   const hasHashTokens = sensitive.some((key) => hashParams.has(key))
-  const hasSearchCode = searchParams.has('code')
+  const hasSearchCode = searchParams.has('code') || searchParams.has('token_hash')
 
   if (!hasHashTokens && !hasSearchCode) return
 
   for (const key of sensitive) searchParams.delete(key)
+  for (const key of ['type']) hashParams.delete(key)
   const nextSearch = searchParams.toString()
   const nextPath = pathname + (nextSearch ? `?${nextSearch}` : '')
   window.history.replaceState(null, '', nextPath)
@@ -34,6 +37,7 @@ export function urlLooksLikeAuthCallback(): boolean {
   const { search, hash } = window.location
   const hashBody = hash.startsWith('#') ? hash.slice(1) : hash
   if (/type=recovery|type=magiclink|access_token=/i.test(hashBody)) return true
-  if (new URLSearchParams(search).has('code')) return true
+  const searchParams = new URLSearchParams(search)
+  if (searchParams.has('code') || searchParams.has('token_hash')) return true
   return false
 }

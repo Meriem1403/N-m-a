@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { BrowserRouter, Navigate, Routes, Route } from 'react-router-dom'
 import { Layout } from './components/layout/Layout'
 import { AuthProvider, useAuth } from './store/AuthContext'
@@ -107,6 +108,15 @@ function AuthenticatedShell() {
   )
 }
 
+function RecoveryEntryRedirect() {
+  useEffect(() => {
+    import('./lib/recoverySession').then(({ redirectRecoveryCallbackToResetPage }) => {
+      redirectRecoveryCallbackToResetPage()
+    })
+  }, [])
+  return null
+}
+
 export default function App() {
   if (import.meta.env.PROD && !isSupabaseConfigured()) {
     return <ProductionConfigRequired />
@@ -114,6 +124,7 @@ export default function App() {
 
   return (
     <BrowserRouter>
+      <RecoveryEntryRedirect />
       <Routes>
         <Route path="/f/:token" element={<PublicIntakeForm />} />
         <Route path="/reinitialiser-mot-de-passe" element={

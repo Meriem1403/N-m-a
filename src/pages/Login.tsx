@@ -13,6 +13,9 @@ function formatAuthError(err: unknown): string {
     if (msg.includes('email not confirmed')) {
       return 'Confirmez votre email via le lien reçu avant de vous connecter.'
     }
+    if (msg.includes('rate limit') || msg.includes('over_email_send_rate_limit')) {
+      return 'Trop de mails envoyés récemment (limite Supabase). Attendez environ 1 h sans recliquer, ou définissez le mot de passe depuis Supabase → Authentication → Users → votre compte.'
+    }
     return err.message
   }
   return 'Connexion impossible.'
